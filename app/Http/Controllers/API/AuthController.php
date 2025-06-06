@@ -47,22 +47,34 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+        try {
+            // $request->validate([
+            //     'email' => 'required|email',
+            //     'password' => 'required',
+            // ]);
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email',
+                'password' => 'required',
+            ]);
 
-        $user = User::where('email', $request->email)->first();
+            if ($validator->fails()) {
+                return returnErrorWithData('Validation failed', $validator->errors());
+            }
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages(['email' => ['The provided credentials are incorrect.']]);
+            $user = User::where('email', $request->email)->first();
+
+            if (! $user || ! Hash::check($request->password, $user->password)) {
+                throw ValidationException::withMessages(['email' => ['Login credentials are incorrect.']]);
+            }
+
+            $data = [
+                'token' => $user->createToken('api-token')->plainTextToken,
+                'user' => $user
+            ];
+            return returnSuccess('User login successfully', $data);
+        } catch (\Exception $e) {
+            return returnError($e->getMessage());
         }
-
-        $data = [
-            'token' => $user->createToken('api-token')->plainTextToken,
-            'user' => $user
-        ];
-        return returnSuccess('User login successfully', $data);
     }
 
     public function forgotPassword(Request $request)
