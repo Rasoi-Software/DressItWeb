@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
@@ -31,6 +32,7 @@ class AuthController extends Controller
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
+                'phone' => $validated['phone'],
                 'password' => bcrypt($validated['password']),
             ]);
 
@@ -39,11 +41,64 @@ class AuthController extends Controller
                 'user' => $user
             ];
 
-            return returnSuccess('User registered successfully', $data);
+            $otp = rand(100000, 999999);
+            $user->otp = $otp;
+            $user->otp_expires_at = now()->addMinutes(10);
+            $user->save();
+
+            // Send OTP via email
+            Mail::raw("Your OTP is: {$otp}", function ($message) use ($user) {
+                $message->to($user->email)
+                    ->subject('Password Reset OTP');
+            });
+
+            return returnSuccess('OTP sent to your email.Please verify your email');
+
+            // return returnSuccess('User registered successfully', $data);
         } catch (\Exception $e) {
             return returnError('Something went wrong. Please try again.');
         }
     }
+
+    public function verifyOtp(Request $request)
+    {
+        
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users,email',
+            'otp' => 'required|digits:6'
+
+        ]);
+
+        if ($validator->fails()) {
+            return returnErrorWithData('Validation failed', $validator->errors());
+        }
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return returnError('User not found.');
+        }
+
+        if ($user->otp !== $request->otp) {
+            return returnError('Invalid OTP.');
+        }
+
+        if ($user->otp_expires_at < now()) {
+            return returnError('OTP has expired.');
+        }
+
+        // Optional: mark email as verified
+        $user->email_verified_at = now();
+        $user->otp = null;
+        $user->otp_expires_at = null;
+        $user->save();
+
+        return returnSuccess('Email verified successfully.', [
+            'token' => $user->createToken('api-token')->plainTextToken,
+            'user' => $user,
+        ]);
+    }
+
 
     public function login(Request $request)
     {
