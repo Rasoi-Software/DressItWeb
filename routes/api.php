@@ -1,5 +1,6 @@
 <?php 
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\PasswordOtpController;
 
@@ -10,3 +11,7 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::post('/forgot-password-otp', [PasswordOtpController::class, 'sendOtp']);
 Route::post('/reset-password-otp', [PasswordOtpController::class, 'resetWithOtp']);
+
+
+
+Route::middleware('auth:sanctum')->post('/update-profile', [UserController::class, 'updateProfile']);
