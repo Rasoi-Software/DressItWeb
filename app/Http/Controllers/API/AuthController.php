@@ -32,7 +32,7 @@ class AuthController extends Controller
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'phone' => $validated['phone'],
+                'phone' => $request->phone,
                 'password' => bcrypt($validated['password']),
             ]);
 
@@ -56,7 +56,7 @@ class AuthController extends Controller
 
             // return returnSuccess('User registered successfully', $data);
         } catch (\Exception $e) {
-            return returnError('Something went wrong. Please try again.');
+            return returnError($e->getMessage());
         }
     }
 
