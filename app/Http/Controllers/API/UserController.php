@@ -63,3 +63,4 @@ class UserController extends Controller
         return returnSuccess('Profile updated successfully', $user);
     }
 }
+              
