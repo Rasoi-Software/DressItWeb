@@ -55,6 +55,24 @@ class LookController extends Controller
         $looks = Look::with('media')->where('user_id', auth()->id())->latest()->get();
         return returnSuccess('Looks fetched successfully.', $looks);
     }
+    // ✅ Get All Looks
+    public function search_look(Request $request)
+    {
+        $search = $request->q;
+
+        $looks = Look::with('media')
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('set_goal', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%")
+                        ->orWhere('location', 'like', "%{$search}%");
+                });
+            })
+            ->get();
+
+        return returnSuccess('Looks fetched successfully.', $looks);
+    }
+
 
     // ✅ Show Single Look
     public function show($id)
@@ -76,7 +94,7 @@ class LookController extends Controller
         if (!$look) {
             return returnError('Look not found.');
         }
-
+        //dd($request->all());
         $validator = Validator::make($request->all(), [
             'set_goal' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
@@ -88,7 +106,12 @@ class LookController extends Controller
             return returnErrorWithData('Validation failed', $validator->errors());
         }
 
-        $look->update($request->only('set_goal', 'description', 'location'));
+
+        // Update look fields
+        $look->set_goal = $request->set_goal;
+        $look->description = $request->description;
+        $look->location = $request->location;
+        $look->save();
 
         // Upload new media if provided
         if ($request->hasFile('media')) {

@@ -20,6 +20,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/update-profile', [UserController::class, 'updateProfile']);
 
 
+    Route::get('/search/looks', [LookController::class, 'search_look']);
     Route::get('/looks', [LookController::class, 'index']);
     Route::post('/looks', [LookController::class, 'store']);
     Route::get('/looks/{id}', [LookController::class, 'show']);
