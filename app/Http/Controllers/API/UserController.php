@@ -34,6 +34,10 @@ class UserController extends Controller
         }
 
         if ($request->filled('name')) $user->name = $request->name;
+        if ($request->filled('nickname')) $user->nickname = $request->nickname;
+        if ($request->filled('gender')) $user->gender = $request->gender;
+        if ($request->filled('interested_in')) $user->interested_in = $request->interested_in;
+        if ($request->filled('dob')) $user->dob = $request->dob;
         if ($request->filled('email')) $user->email = $request->email;
         if ($request->filled('phone')) $user->phone = $request->phone;
         if ($request->filled('location')) $user->location = $request->location;
