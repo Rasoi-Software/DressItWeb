@@ -37,14 +37,22 @@ class UserController extends Controller
         if ($request->filled('nickname')) $user->nickname = $request->nickname;
         if ($request->filled('gender')) $user->gender = $request->gender;
         if ($request->filled('interested_in')) $user->interested_in = $request->interested_in;
-        if ($request->filled('dob')) $user->dob = $request->dob;
         if ($request->filled('email')) $user->email = $request->email;
         if ($request->filled('phone')) $user->phone = $request->phone;
         if ($request->filled('location')) $user->location = $request->location;
-        if ($request->filled('age')) $user->age = $request->age;
         if ($request->filled('bio')) $user->bio = $request->bio;
         if ($request->filled('password')) $user->password = bcrypt($request->password);
+        if ($request->filled('dob')) {
+            $user->dob = $request->dob;
 
+            // Calculate age from DOB
+            try {
+                $dob = \Carbon\Carbon::parse($request->dob);
+                $user->age = $dob->age;
+            } catch (\Exception $e) {
+                return returnError('Invalid date of birth format. Use YYYY-MM-DD.');
+            }
+        }
         if ($request->hasFile('profile_image')) {
             $imagePath = $request->file('profile_image')->store('profile_images', 'public');
             $user->profile_image = $imagePath;
