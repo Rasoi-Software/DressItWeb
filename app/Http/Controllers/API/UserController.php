@@ -62,5 +62,24 @@ class UserController extends Controller
 
         return returnSuccess('Profile updated successfully', $user);
     }
+    public function getMyProfile()
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return returnError('User not authenticated');
+        }
+
+        return returnSuccess('User profile fetched successfully', $user);
+    }
+    public function getProfile($id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return returnError('User not authenticated');
+        }
+
+        return returnSuccess('User profile fetched successfully', $user);
+    }
 }
-              

@@ -56,6 +56,20 @@ class LookController extends Controller
         return returnSuccess('Looks fetched successfully.', $looks);
     }
     // ✅ Get All Looks
+    public function all_looks($user_id = null)
+    {
+        $query = Look::with('media')->latest();
+
+        if (!is_null($user_id)) {
+            $query->where('user_id', $user_id);
+        }
+
+        $looks = $query->get();
+
+        return returnSuccess('Looks fetched successfully.', $looks);
+    }
+
+    // ✅ Get All Looks
     public function search_look(Request $request)
     {
         $search = $request->q;

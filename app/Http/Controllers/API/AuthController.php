@@ -41,7 +41,7 @@ class AuthController extends Controller
                 'user' => $user
             ];
 
-            $otp = rand(100000, 999999);
+            $otp = random_int(100000, 999999);
             $user->otp = $otp;
             $user->otp_expires_at = now()->addMinutes(10);
             $user->save();

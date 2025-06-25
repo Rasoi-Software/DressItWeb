@@ -19,4 +19,13 @@ class Look extends Model
     {
         return $this->hasMany(LookMedia::class);
     }
+    public function likes()
+    {
+        return $this->belongsToMany(User::class, 'look_likes');
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(LookComment::class);
+    }
 }

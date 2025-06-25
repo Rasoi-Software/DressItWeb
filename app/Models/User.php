@@ -56,4 +56,47 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    protected $appends = [
+        'count_follower',
+        'count_following',
+        'count_look',
+    ];
+
+    public function getCountFollowerAttribute()
+    {
+        return $this->followers()->count();
+    }
+
+    public function getCountFollowingAttribute()
+    {
+        return $this->following()->count();
+    }
+
+    public function getCountLookAttribute()
+    {
+        return $this->looks()->count();
+    }
+    public function followers()
+    {
+        return $this->belongsToMany(User::class, 'follows', 'following_id', 'follower_id');
+    }
+
+    public function following()
+    {
+        return $this->belongsToMany(User::class, 'follows', 'follower_id', 'following_id');
+    }
+
+    public function looks()
+    {
+        return $this->hasMany(Look::class, 'user_id');
+    }
+    public function likedLooks()
+    {
+        return $this->belongsToMany(Look::class, 'look_likes');
+    }
+
+    public function lookComments()
+    {
+        return $this->hasMany(LookComment::class);
+    }
 }
