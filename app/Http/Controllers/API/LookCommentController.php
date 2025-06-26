@@ -57,8 +57,7 @@ class LookCommentController extends Controller
     public function index($lookId)
     {
         try {
-            $look = Look::with('comments.user')->findOrFail($lookId);
-            $comments = $look->comments()->latest()->get();
+           $comments = LookComment::with('user')->where('look_id',$lookId)->get();
             return returnSuccess('Comments fetched successfully.', $comments);
         } catch (\Exception $e) {
             return returnError($e->getMessage());

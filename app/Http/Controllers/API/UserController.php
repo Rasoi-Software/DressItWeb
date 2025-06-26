@@ -53,9 +53,19 @@ class UserController extends Controller
                 return returnError('Invalid date of birth format. Use YYYY-MM-DD.');
             }
         }
+        // if ($request->hasFile('profile_image')) {
+        //     $imagePath = $request->file('profile_image')->store('profile_images', 'public');
+        //     $user->profile_image = $imagePath;
+        // }
+
         if ($request->hasFile('profile_image')) {
-            $imagePath = $request->file('profile_image')->store('profile_images', 'public');
+            $image = $request->file('profile_image');
+            $imagePath = $image->store('profile_images', 's3'); // Upload to S3
             $user->profile_image = $imagePath;
+
+            // Optionally, make it publicly accessible
+            \Storage::disk('s3')->setVisibility($imagePath, 'public');
+            dd($imagePath);
         }
 
         $user->save();
@@ -82,4 +92,6 @@ class UserController extends Controller
 
         return returnSuccess('User profile fetched successfully', $user);
     }
+
+    
 }

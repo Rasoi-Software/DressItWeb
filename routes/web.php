@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\CityController;
+use Illuminate\Support\Facades\Storage;
 
 Route::get('/', function () {
     return view('welcome');
@@ -34,3 +35,34 @@ Route::middleware(['auth', 'role:user'])->group(function () {
         return view('user.dashboard');
     });
 });
+
+
+
+Route::get('/test-s3', function () {
+    try {
+        $filePath = 'test.txt';
+        $fileContent = 'Hello from Laravel!';
+
+        // Upload file to S3
+        Storage::disk('s3')->put($filePath, $fileContent);
+
+        // Get file content back
+        $retrievedContent = Storage::disk('s3')->get($filePath);
+
+        // Encode it in base64
+        $base64 = base64_encode($retrievedContent);
+
+        return response()->json([
+            'success' => true,
+            'base64' => $base64
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'S3 Connection Failed: ' . $e->getMessage()
+        ]);
+    }
+});
+
+

@@ -18,7 +18,7 @@ class LookComment extends Model
     // A comment belongs to a user
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->select('id', 'name', 'email', 'profile_image');
     }
 
     // A comment belongs to a look
