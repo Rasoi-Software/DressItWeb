@@ -8,6 +8,7 @@ use App\Http\Controllers\API\LookController;
 use App\Http\Controllers\API\LookCommentController;
 use App\Http\Controllers\API\ChatController;
 use App\Http\Controllers\API\FollowController;
+use App\Http\Controllers\API\MessageController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
@@ -42,7 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/comments/{id}', [LookCommentController::class, 'update']);
     Route::delete('/comments/{id}', [LookCommentController::class, 'destroy']);
 
-    Route::post('/send-message', [ChatController::class, 'sendMessage']);
+    // Route::post('/send-message', [ChatController::class, 'sendMessage']);
     Route::post('/chat/upload-media', [ChatController::class, 'uploadMedia']);
     Route::get('/chat-history/{userId}', [ChatController::class, 'chatHistory']);
 
@@ -51,4 +52,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/unfollow', [FollowController::class, 'unfollow']);
     Route::get('/user/{id}/followers', [FollowController::class, 'followers']);
     Route::get('/user/{id}/following', [FollowController::class, 'following']);
+
+    //real time chat
+    Route::post('/send-message', [MessageController::class, 'send']);
+    Route::get('/chat-list', [MessageController::class, 'chatList']);
+    Route::get('/chat-with/{userId}', [MessageController::class, 'chatWith']);
 });

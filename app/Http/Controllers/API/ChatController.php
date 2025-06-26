@@ -14,8 +14,7 @@ use Illuminate\Support\Facades\Http;
 class ChatController extends Controller
 {
     public function sendMessage(Request $request)
-    {
-        
+    {       
         $validator = Validator::make($request->all(), [
             'receiver_id' => 'required|exists:users,id',
             'message' => 'required|string'
