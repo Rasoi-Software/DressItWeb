@@ -34,6 +34,7 @@ class MessageController extends Controller
   
 
         event(new \App\Events\MessageSent($data->toArray()));
+          //broadcast(new MessageSent($data->toArray()))->toOthers();
 
         return response()->json(['status' => 'Message Sent', 'data' => $data]);
     }
