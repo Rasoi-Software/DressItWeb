@@ -65,4 +65,20 @@ Route::get('/test-s3', function () {
     }
 });
 
+use App\Events\MessageSent;
+
+Route::get('/test-laravel-pusher', function () {
+    $message = [
+        'from_user_id' => 1,
+        'to_user_id' => 2,
+        'text' => 'Hello from Laravel!',
+        'created_at' => now()->toDateTimeString(),
+    ];
+
+    broadcast(new MessageSent($message))->toOthers(); // for Echo
+    // OR simply:
+    event(new MessageSent($message));
+
+    return '✅ Message broadcasted!';
+});
 
