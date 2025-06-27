@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -60,13 +61,37 @@ class UserController extends Controller
 
         if ($request->hasFile('profile_image')) {
             $image = $request->file('profile_image');
-            $imagePath = $image->store('profile_images', 's3'); // Upload to S3
-            $user->profile_image = $imagePath;
 
-            // Optionally, make it publicly accessible
-            \Storage::disk('s3')->setVisibility($imagePath, 'public');
-            dd($imagePath);
+            // Force get extension from original name
+            $originalName = $image->getClientOriginalName();
+            $extension = pathinfo($originalName, PATHINFO_EXTENSION); // "jpg"
+
+            // Sanitize and generate full filename with extension
+            $fileName = uniqid() . '_' . pathinfo($originalName, PATHINFO_FILENAME);
+            $fileName = preg_replace('/[^a-zA-Z0-9\-_]/', '', $fileName); // clean name
+            $fileName = $fileName . '.' . $extension;
+
+            // Upload to S3
+            $imagePath = $image->storeAs('profile_images', $fileName, 's3');
+
+            if (!$imagePath || !Storage::disk('s3')->exists($imagePath)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Upload failed or file not found on S3',
+                    'path' => $imagePath,
+                ]);
+            }
+
+            Storage::disk('s3')->setVisibility($imagePath, 'public');
+
+            // Generate public URL
+            $imageUrl = Storage::disk('s3')->url($imagePath);
+
+            $user->profile_image = $imageUrl;
         }
+
+
+
 
         $user->save();
 
@@ -92,6 +117,4 @@ class UserController extends Controller
 
         return returnSuccess('User profile fetched successfully', $user);
     }
-
-    
 }
