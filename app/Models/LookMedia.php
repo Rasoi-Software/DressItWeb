@@ -17,6 +17,7 @@ class LookMedia extends Model
     }
     public function getMediaUrlAttribute()
     {
-    return asset(Storage::url($this->attributes['media_path']));
+    // return asset(Storage::url($this->attributes['media_path']));
+      return Storage::disk('s3')->url($this->attributes['media_path']);
     }
 }

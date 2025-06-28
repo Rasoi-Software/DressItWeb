@@ -8,6 +8,7 @@ use App\Models\LookMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class LookController extends Controller
 {
@@ -35,7 +36,10 @@ class LookController extends Controller
         // Upload media
         if ($request->hasFile('media')) {
             foreach ($request->file('media') as $file) {
-                $path = $file->store('looks/media', 'public');
+                $path = $file->store('looks/media',  [
+                'disk' => 's3',
+                'visibility' => 'public',
+            ]);
                 $mimeType = $file->getMimeType();
                 $type = str_contains($mimeType, 'video') ? 'video' : 'image';
 
@@ -145,21 +149,24 @@ class LookController extends Controller
     }
 
     // ✅ Delete Look
+    
     public function destroy($id)
     {
+          //DB::enableQueryLog();
         $look = Look::where('id', $id)->where('user_id', auth()->id())->first();
+        // dd(DB::getQueryLog());
 
         if (!$look) {
             return returnError('Look not found.');
         }
 
-        // Delete media files from storage
+        // Delete media files from S3
         foreach ($look->media as $media) {
-            Storage::disk('public')->delete($media->media_path);
-            $media->delete();
+            Storage::disk('s3')->delete($media->media_path); // ✅ delete from S3
+            $media->delete(); // ✅ delete DB entry
         }
 
-        $look->delete();
+        $look->delete(); // ✅ delete the look record
 
         return returnSuccess('Look deleted successfully.');
     }
