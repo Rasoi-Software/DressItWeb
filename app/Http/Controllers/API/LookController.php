@@ -49,34 +49,34 @@ class LookController extends Controller
         //         ]);
         //     }
         // }
+
         if ($request->hasFile('media')) {
             foreach ($request->file('media') as $file) {
-                // Get original name and extension
                 $originalName = $file->getClientOriginalName();
                 $extension = pathinfo($originalName, PATHINFO_EXTENSION);
 
-                // Generate sanitized custom filename
                 $baseName = uniqid() . '_' . pathinfo($originalName, PATHINFO_FILENAME);
                 $baseName = preg_replace('/[^a-zA-Z0-9\-_]/', '', $baseName);
+                $baseName = strtolower($baseName);
                 $fileName = $baseName . '.' . $extension;
 
-                // Define the full path on S3
                 $filePath = 'looks/media/' . $fileName;
 
-                // Upload to S3 with public visibility
-                Storage::disk('s3')->put($filePath, file_get_contents($file), 'public');
+                try {
+                    Storage::disk('s3')->put($filePath, file_get_contents($file), ['visibility' => 'public']);
 
-                // Get the file's MIME type (image or video)
-                $mimeType = $file->getMimeType();
-                $type = str_contains($mimeType, 'video') ? 'video' : 'image';
+                    $mimeType = $file->getMimeType();
+                    $type = str_contains($mimeType, 'video') ? 'video' : 'image';
 
-                // Save info in DB
-                $look->media()->create([
-                    'media_path' => $filePath, // This path will be used to generate full S3 URL later
-                    'media_type' => $type,
-                ]);
+                    $look->media()->create([
+                        'media_path' => $filePath,
+                        'media_type' => $type,
+                    ]);
+                } catch (\Exception $e) {
+                    // Handle error (log, return response, etc.)
+                }
             }
-         }
+        }
 
         return returnSuccess('Look created successfully.', $look->load('media'));
     }
@@ -159,20 +159,33 @@ class LookController extends Controller
         $look->location = $request->location;
         $look->save();
 
-        // Upload new media if provided
         if ($request->hasFile('media')) {
             foreach ($request->file('media') as $file) {
-                $path = $file->store('looks/media', 'public');
-                $mimeType = $file->getMimeType();
-                $type = str_contains($mimeType, 'video') ? 'video' : 'image';
+                $originalName = $file->getClientOriginalName();
+                $extension = pathinfo($originalName, PATHINFO_EXTENSION);
 
-                $look->media()->create([
-                    'media_path' => $path,
-                    'media_type' => $type,
-                ]);
+                $baseName = uniqid() . '_' . pathinfo($originalName, PATHINFO_FILENAME);
+                $baseName = preg_replace('/[^a-zA-Z0-9\-_]/', '', $baseName);
+                $baseName = strtolower($baseName);
+                $fileName = $baseName . '.' . $extension;
+
+                $filePath = 'looks/media/' . $fileName;
+
+                try {
+                    Storage::disk('s3')->put($filePath, file_get_contents($file), ['visibility' => 'public']);
+
+                    $mimeType = $file->getMimeType();
+                    $type = str_contains($mimeType, 'video') ? 'video' : 'image';
+
+                    $look->media()->create([
+                        'media_path' => $filePath,
+                        'media_type' => $type,
+                    ]);
+                } catch (\Exception $e) {
+                    // Handle error (log, return response, etc.)
+                }
             }
         }
-
         return returnSuccess('Look updated successfully.', $look->load('media'));
     }
 
