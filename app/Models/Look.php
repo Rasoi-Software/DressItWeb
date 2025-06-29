@@ -13,7 +13,7 @@ class Look extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->select('id', 'name', 'email', 'profile_image');
     }
     public function media()
     {

@@ -84,13 +84,13 @@ class LookController extends Controller
     // ✅ Get All Looks
     public function index()
     {
-        $looks = Look::with('media')->where('user_id', auth()->id())->latest()->get();
+        $looks = Look::with('media','user')->where('user_id', auth()->id())->latest()->get();
         return returnSuccess('Looks fetched successfully.', $looks);
     }
     // ✅ Get All Looks
     public function all_looks($user_id = null)
     {
-        $query = Look::with('media')->latest();
+        $query = Look::with('media','user')->latest();
 
         if (!is_null($user_id)) {
             $query->where('user_id', $user_id);
@@ -106,7 +106,7 @@ class LookController extends Controller
     {
         $search = $request->q;
 
-        $looks = Look::with('media')
+        $looks = Look::with('media','user')
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('set_goal', 'like', "%{$search}%")
@@ -123,7 +123,7 @@ class LookController extends Controller
     // ✅ Show Single Look
     public function show($id)
     {
-        $look = Look::with('media')->where('id', $id)->where('user_id', auth()->id())->first();
+        $look = Look::with('media','user')->where('id', $id)->where('user_id', auth()->id())->first();
 
         if (!$look) {
             return returnError('Look not found.');
