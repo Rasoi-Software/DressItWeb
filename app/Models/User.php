@@ -62,6 +62,20 @@ class User extends Authenticatable
         'count_look',
     ];
 
+    public function getProfileImageAttribute(): string
+    {
+        if ($this->attributes['profile_image']) {
+            return $this->attributes['profile_image'];
+        } else {
+            if ($this->gender == 'female') {
+                return asset('assets/img/placeholder_female.jpg');
+            } else {
+                return asset('assets/img/placeholder_male.jpg');
+            }
+        }
+    }
+
+
     public function getCountFollowerAttribute()
     {
         return $this->followers()->count();
@@ -98,5 +112,17 @@ class User extends Authenticatable
     public function lookComments()
     {
         return $this->hasMany(LookComment::class);
+    }
+
+    // Users this user has blocked
+    public function blockedUsers()
+    {
+        return $this->belongsToMany(User::class, 'user_blocks', 'user_id', 'blocked_id');
+    }
+
+    // Users who have blocked this user
+    public function blockedBy()
+    {
+        return $this->belongsToMany(User::class, 'user_blocks', 'blocked_id', 'user_id');
     }
 }

@@ -6,7 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 use App\Models\Message;
-use App\Events\MessageSent;
+use App\Events\ChatMessageEvent;
+
 
 class MessageController extends Controller
 {
@@ -33,8 +34,8 @@ class MessageController extends Controller
         ]);
   
 
-        event(new \App\Events\MessageSent($data->toArray()));
-          //broadcast(new MessageSent($data->toArray()))->toOthers();
+        event(new ChatMessageEvent($data->toArray()));
+          //broadcast(new ChatMessageEvent($data->toArray()))->toOthers();
 
         return response()->json(['status' => 'Message Sent', 'data' => $data]);
     }

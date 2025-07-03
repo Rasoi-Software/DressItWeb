@@ -4,7 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\CityController;
+use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\DashboardController;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Controllers\API\StripeController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -15,19 +18,15 @@ Route::get('admin/login', [LoginController::class, 'showLoginForm'])->name('admi
 Route::post('admin/login', [LoginController::class, 'login'])->name('admin.login.submit');
 Route::post('admin/logout', [LoginController::class, 'logout'])->name('admin.logout');
 
-Route::middleware(['auth', 'role:admin'])
-    ->prefix('admin')
-    ->name('admin.')
-    ->group(function () {
-        Route::get('/dashboard', function () {
-            return view('admin.dashboard');
-        })->name('dashboard');
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-        Route::resource('users', UserController::class);
-        Route::resource('cities', CityController::class);
-        Route::post('cities/import', [CityController::class, 'import'])->name('cities.import');
-        Route::get('cities-export', [CityController::class, 'export'])->name('cities.export');
-    });
+    Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+    Route::resource('users', UserController::class);
+    Route::resource('cities', CityController::class);
+    Route::post('cities/import', [CityController::class, 'import'])->name('cities.import');
+    Route::get('cities-export', [CityController::class, 'export'])->name('cities.export');
+});
 
 
 Route::middleware(['auth', 'role:user'])->group(function () {
@@ -37,48 +36,31 @@ Route::middleware(['auth', 'role:user'])->group(function () {
 });
 
 
-
+Route::post('/save-payment-method', [StripeController::class, 'savePaymentMethod'])->name('save.payment.method');
+Route::view('/test/card', 'testcard'); // show form
 Route::get('/test-s3', function () {
     try {
         $filePath = 'test.txt';
         $fileContent = 'Hello from Laravel!';
 
-        // Upload file to S3
-        Storage::disk('s3')->put($filePath, $fileContent);
+        // Upload file with 'public' visibility
+        $success = Storage::disk('s3')->put($filePath, $fileContent, 'public');
 
-        // Get file content back
-        $retrievedContent = Storage::disk('s3')->get($filePath);
+        if (!$success) {
+            return response()->json(['success' => false, 'message' => 'Upload failed']);
+        }
 
-        // Encode it in base64
-        $base64 = base64_encode($retrievedContent);
+        // Get the public URL of the file
+        $url = Storage::disk('s3')->url($filePath);
 
         return response()->json([
             'success' => true,
-            'base64' => $base64
+            'url' => $url,
         ]);
-
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
-            'message' => 'S3 Connection Failed: ' . $e->getMessage()
+            'message' => 'S3 Error: ' . $e->getMessage(),
         ]);
     }
 });
-
-use App\Events\MyEvent;
-
-
-Route::get('/send', function () {
-    $message = [
-        'from_user_id' => 1,
-        'to_user_id' => 2,
-        'text' => 'Hello from Laravel Blade!',
-        'created_at' => now()->toDateTimeString(),
-    ];
-
-    event(new MyEvent($message));
-
-    return '✅ Message Sent!';
-});
-
-

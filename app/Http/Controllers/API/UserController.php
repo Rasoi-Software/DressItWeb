@@ -86,10 +86,9 @@ class UserController extends Controller
 
             // Generate public URL
             $imageUrl = Storage::disk('s3')->url($imagePath);
-
+            //dd($imageUrl);
             $user->profile_image = $imageUrl;
         }
-
 
 
 
@@ -116,5 +115,47 @@ class UserController extends Controller
         }
 
         return returnSuccess('User profile fetched successfully', $user);
+    }
+    public function alluser()
+    {
+        $user = User::get();
+
+        return returnSuccess('User profile fetched successfully', $user);
+    }
+
+    public function toggleBlock($id)
+    {
+        try {
+            $blocker = auth()->user();
+            $blocked = User::findOrFail($id);
+
+            if ($blocker->id == $blocked->id) {
+                return returnError("You can't block yourself");
+            }
+
+            $isBlocked = $blocker->blockedUsers()->where('blocked_id', $blocked->id)->exists();
+
+            if ($isBlocked) {
+                // Unblock
+                $blocker->blockedUsers()->detach($blocked->id);
+                $message = 'User unblocked successfully';
+            } else {
+                // Block
+                $blocker->blockedUsers()->attach($blocked->id);
+                $message = 'User blocked successfully';
+            }
+
+            // Get updated list of blocked users
+            $blockedUsers = $blocker->blockedUsers()
+                ->select('users.id', 'users.name', 'users.email', 'users.profile_image')
+                ->get();
+
+            return returnSuccess($message, [
+                'blocked_user_id' => $blocked->id,
+                'blocked_users'   => $blockedUsers,
+            ]);
+        } catch (\Exception $e) {
+            return returnError($e->getMessage());
+        }
     }
 }
