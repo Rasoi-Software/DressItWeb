@@ -236,33 +236,33 @@ class LookController extends Controller
         $look->location = $request->location;
         $look->save();
 
-        if ($request->hasFile('media')) {
-            foreach ($request->file('media') as $file) {
-                $originalName = $file->getClientOriginalName();
-                $extension = pathinfo($originalName, PATHINFO_EXTENSION);
+        // if ($request->hasFile('media')) {
+        //     foreach ($request->file('media') as $file) {
+        //         $originalName = $file->getClientOriginalName();
+        //         $extension = pathinfo($originalName, PATHINFO_EXTENSION);
 
-                $baseName = uniqid() . '_' . pathinfo($originalName, PATHINFO_FILENAME);
-                $baseName = preg_replace('/[^a-zA-Z0-9\-_]/', '', $baseName);
-                $baseName = strtolower($baseName);
-                $fileName = $baseName . '.' . $extension;
+        //         $baseName = uniqid() . '_' . pathinfo($originalName, PATHINFO_FILENAME);
+        //         $baseName = preg_replace('/[^a-zA-Z0-9\-_]/', '', $baseName);
+        //         $baseName = strtolower($baseName);
+        //         $fileName = $baseName . '.' . $extension;
 
-                $filePath = 'looks/media/' . $fileName;
+        //         $filePath = 'looks/media/' . $fileName;
 
-                try {
-                    Storage::disk('s3')->put($filePath, file_get_contents($file), ['visibility' => 'public']);
+        //         try {
+        //             Storage::disk('s3')->put($filePath, file_get_contents($file), ['visibility' => 'public']);
 
-                    $mimeType = $file->getMimeType();
-                    $type = str_contains($mimeType, 'video') ? 'video' : 'image';
+        //             $mimeType = $file->getMimeType();
+        //             $type = str_contains($mimeType, 'video') ? 'video' : 'image';
 
-                    $look->media()->create([
-                        'media_path' => $filePath,
-                        'media_type' => $type,
-                    ]);
-                } catch (\Exception $e) {
-                    // Handle error (log, return response, etc.)
-                }
-            }
-        }
+        //             $look->media()->create([
+        //                 'media_path' => $filePath,
+        //                 'media_type' => $type,
+        //             ]);
+        //         } catch (\Exception $e) {
+        //             // Handle error (log, return response, etc.)
+        //         }
+        //     }
+        // }
         return returnSuccess('Look updated successfully.', $look->load('media'));
     }
 
@@ -270,22 +270,29 @@ class LookController extends Controller
 
     public function destroy($id)
     {
-        //DB::enableQueryLog();
-        $look = Look::where('id', $id)->where('user_id', auth()->id())->first();
-        // dd(DB::getQueryLog());
+        // Find the Look with related media
+        $look = Look::with('media')
+            ->where('id', $id)
+            ->where('user_id', auth()->id())
+            ->first();
 
         if (!$look) {
             return returnError('Look not found.');
         }
 
-        // Delete media files from S3
-        foreach ($look->media as $media) {
-            Storage::disk('s3')->delete($media->media_path); // ✅ delete from S3
-            $media->delete(); // ✅ delete DB entry
-        }
+        DB::transaction(function () use ($look) {
+            foreach ($look->media as $media) {
+                // Delete file from S3
+                Storage::disk('s3')->delete($media->media_path);
 
-        $look->delete(); // ✅ delete the look record
+                // Delete media DB record
+                $media->delete();
+            }
 
-        return returnSuccess('Look deleted successfully.');
+            // Delete the Look record
+            $look->delete();
+        });
+
+        return returnSuccess('Look and associated media deleted successfully.');
     }
 }

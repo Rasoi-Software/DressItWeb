@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\EmailVerificationMail;
 
 class AuthController extends Controller
 {
@@ -47,10 +48,20 @@ class AuthController extends Controller
             $user->save();
 
             // Send OTP via email
-            Mail::raw("Your OTP is: {$otp}", function ($message) use ($user) {
-                $message->to($user->email)
-                    ->subject('Password Reset OTP');
-            });
+            // Mail::raw("Your OTP is: {$otp}", function ($message) use ($user) {
+            //     $message->to($user->email)
+            //         ->subject('Password Reset OTP');
+            // });
+            $data = [
+                'name'       => $user->name,
+                'email'      => $user->email,
+                'subject'    => 'Verify Your Email Address with OTP',
+                'otp'        => $otp,
+                'expires_at' => '10 minutes'
+            ];
+
+            // send email
+            Mail::to($user->email)->send(new EmailVerificationMail($data));
 
             return returnSuccess('OTP sent to your email.Please verify your email');
 

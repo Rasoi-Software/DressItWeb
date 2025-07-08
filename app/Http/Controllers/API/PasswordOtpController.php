@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use App\Mail\ForgotPasswordSendOtpMail;
 
 use Carbon\Carbon;
 
@@ -37,10 +38,21 @@ class PasswordOtpController extends Controller
         $user->save();
 
         // Send OTP via email
-        Mail::raw("Your OTP is: {$otp}", function ($message) use ($user) {
-            $message->to($user->email)
-                    ->subject('Password Reset OTP');
-        });
+        // Mail::raw("Your OTP is: {$otp}", function ($message) use ($user) {
+        //     $message->to($user->email)
+        //             ->subject('Password Reset OTP');
+        // });
+        // Generate OTP
+         $data = [];
+        $data['otp'] = $otp;
+        $data['email'] = $user->email;
+        $data['name'] = $user->name;
+        $data['subject'] = 'Your OTP for Password Reset';
+        $data['body'] = 'Your OTP is: ' . $otp;
+        $data['view'] = 'emails.forgot-password-send-otp'; 
+        $data['expires_at'] = $user->otp_expires_at;
+
+        Mail::to($user->email)->send(new ForgotPasswordSendOtpMail($data));
 
         return returnSuccess('OTP sent to your email.');
     }
