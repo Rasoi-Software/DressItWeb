@@ -13,6 +13,81 @@ use Illuminate\Support\Facades\DB;
 class LookController extends Controller
 {
     // ✅ Create Look
+    public function storeWithoutLogin(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'set_goal' => 'required|string|max:255',
+            'device_id' => 'required',
+            'description' => 'nullable|string',
+            'location' => 'nullable|string|max:255',
+            'media.*' => 'nullable|file|mimes:jpeg,png,jpg,mp4,mov,avi|max:10240', // 10MB
+        ]);
+
+        if ($validator->fails()) {
+            return returnErrorWithData('Validation failed', $validator->errors());
+        }
+
+        $look = Look::create([
+            'set_goal' => $request->set_goal,
+            'description' => $request->description,
+            'location' => $request->location,
+            'device_id' => $request->device_id,
+            'status' => 'draft'
+        ]);
+
+
+
+        if ($request->hasFile('media')) {
+            foreach ($request->file('media') as $file) {
+                $originalName = $file->getClientOriginalName();
+                $extension = pathinfo($originalName, PATHINFO_EXTENSION);
+
+                $baseName = uniqid() . '_' . pathinfo($originalName, PATHINFO_FILENAME);
+                $baseName = preg_replace('/[^a-zA-Z0-9\-_]/', '', $baseName);
+                $baseName = strtolower($baseName);
+                $fileName = $baseName . '.' . $extension;
+
+                $filePath = 'looks/media/' . $fileName;
+
+                try {
+                    Storage::disk('s3')->put($filePath, file_get_contents($file), ['visibility' => 'public']);
+
+                    $mimeType = $file->getMimeType();
+                    $type = str_contains($mimeType, 'video') ? 'video' : 'image';
+
+                    $look->media()->create([
+                        'media_path' => $filePath,
+                        'media_type' => $type,
+                    ]);
+                } catch (\Exception $e) {
+                    // Handle error (log, return response, etc.)
+                }
+            }
+        }
+
+        return returnSuccess('Draft created successfully',  $look->load('media'));
+    }
+
+    public function afterLoginAssignDrafts(Request $request)
+    {
+        $request->validate([
+            'device_id' => 'required|uuid',
+            'status' => 'required',
+        ]);
+
+        $user = auth()->user();
+
+        Look::where('device_id', $request->device_id)
+            ->whereNull('user_id')
+            ->update([
+                'user_id' => $user->id,
+                'status' => $request->status,
+            ]);
+
+        return returnSuccess('Drafts assigned successfully');
+    }
+
+    // ✅ Create Look
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -84,19 +159,20 @@ class LookController extends Controller
     // ✅ Get All Looks
     public function index()
     {
-        $looks = Look::with('media','user')->where('user_id', auth()->id())->latest()->get();
+        $looks = Look::with('media', 'user')->where('user_id', auth()->id())->latest()->paginate(5);
         return returnSuccess('Looks fetched successfully.', $looks);
     }
     // ✅ Get All Looks
-    public function all_looks($user_id = null)
+    public function all_looks(Request $request, $user_id = null)
     {
-        $query = Look::with('media','user')->latest();
+        $query = Look::with('media', 'user')->latest();
 
         if (!is_null($user_id)) {
             $query->where('user_id', $user_id);
         }
-
-        $looks = $query->get();
+        $query->where('status', 'published');
+        
+        $looks = $query->paginate(5);
 
         return returnSuccess('Looks fetched successfully.', $looks);
     }
@@ -106,7 +182,8 @@ class LookController extends Controller
     {
         $search = $request->q;
 
-        $looks = Look::with('media','user')
+        $looks = Look::with('media', 'user')
+        ->where('status', 'published')
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('set_goal', 'like', "%{$search}%")
@@ -114,7 +191,7 @@ class LookController extends Controller
                         ->orWhere('location', 'like', "%{$search}%");
                 });
             })
-            ->get();
+            ->paginate(50);
 
         return returnSuccess('Looks fetched successfully.', $looks);
     }
@@ -123,7 +200,7 @@ class LookController extends Controller
     // ✅ Show Single Look
     public function show($id)
     {
-        $look = Look::with('media','user')->where('id', $id)->where('user_id', auth()->id())->first();
+        $look = Look::with('media', 'user')->where('id', $id)->where('user_id', auth()->id())->first();
 
         if (!$look) {
             return returnError('Look not found.');
@@ -190,10 +267,10 @@ class LookController extends Controller
     }
 
     // ✅ Delete Look
-    
+
     public function destroy($id)
     {
-          //DB::enableQueryLog();
+        //DB::enableQueryLog();
         $look = Look::where('id', $id)->where('user_id', auth()->id())->first();
         // dd(DB::getQueryLog());
 

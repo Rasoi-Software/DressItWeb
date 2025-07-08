@@ -60,8 +60,18 @@ class User extends Authenticatable
         'count_follower',
         'count_following',
         'count_look',
+        'is_following'
     ];
+    public function getIsFollowingAttribute()
+    {
+        $authUser = auth()->user();
 
+        if (!$authUser || $authUser->id === $this->id) {
+            return false; // you can't follow yourself or if not logged in
+        }
+
+        return $authUser->following()->where('following_id', $this->id)->exists();
+    }
     public function getProfileImageAttribute(): string
     {
         if ($this->attributes['profile_image']) {

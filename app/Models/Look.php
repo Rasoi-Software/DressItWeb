@@ -9,7 +9,14 @@ class Look extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'set_goal', 'description', 'location'];
+    protected $fillable = [
+        'user_id',
+        'set_goal',
+        'description',
+        'location',
+        'device_id',
+        'status'
+    ];
 
     public function user()
     {

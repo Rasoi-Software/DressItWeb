@@ -19,6 +19,9 @@ Route::post('/reset-password-otp', [PasswordOtpController::class, 'resetWithOtp'
 Route::post('/stripe/webhook', [StripeController::class, 'handleWebhook']);
 
 
+Route::post('/looks/draft', [LookController::class, 'storeWithoutLogin']);
+
+
 
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -35,6 +38,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/looks/{id}', [LookController::class, 'show']);
     Route::put('/looks/{id}', [LookController::class, 'update']);
     Route::delete('/looks/{id}', [LookController::class, 'destroy']);
+    Route::post('/looks-assign-drafts', [LookController::class, 'afterLoginAssignDrafts']);
+
+
 
     Route::put('/looks-like-unlike/{look}', [LookCommentController::class, 'toggleLike']);
 

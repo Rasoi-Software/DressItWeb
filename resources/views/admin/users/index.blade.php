@@ -18,6 +18,9 @@
               <thead>
                 <tr>
                   <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Author</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Followers</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Following</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Looks</th>
                   <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                   <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Join Date</th>
                   <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Action</th>
@@ -39,6 +42,15 @@
                     </div>
                   </td>
 
+                  <td class="align-middle text-center text-sm">
+                    {{$user->count_follower}}
+                  </td>
+                  <td class="align-middle text-center text-sm">
+                    {{$user->count_following}}
+                  </td>
+                  <td class="align-middle text-center text-sm">
+                    {{$user->count_look}}
+                  </td>
                   <td class="align-middle text-center text-sm">
                     <span class="badge badge-sm bg-gradient-success">Online</span>
                   </td>
