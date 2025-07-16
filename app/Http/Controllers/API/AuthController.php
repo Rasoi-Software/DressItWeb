@@ -12,6 +12,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailVerificationMail;
+use App\Models\UserTemp;
 
 class AuthController extends Controller
 {
@@ -20,7 +21,7 @@ class AuthController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:users',
+                'email' => 'required|email|unique:users,email',
                 'password' => 'required|string|min:6|confirmed',
             ]);
 
@@ -30,79 +31,125 @@ class AuthController extends Controller
 
             $validated = $validator->validated();
 
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'phone' => $request->phone,
-                'password' => bcrypt($validated['password']),
-            ]);
-
-            $data = [
-                'token' => $user->createToken('api-token')->plainTextToken,
-                'user' => $user
-            ];
-
             $otp = random_int(100000, 999999);
-            $user->otp = $otp;
-            $user->otp_expires_at = now()->addMinutes(10);
-            $user->save();
 
-            // Send OTP via email
-            // Mail::raw("Your OTP is: {$otp}", function ($message) use ($user) {
-            //     $message->to($user->email)
-            //         ->subject('Password Reset OTP');
-            // });
-            $data = [
-                'name'       => $user->name,
-                'email'      => $user->email,
-                'subject'    => 'Verify Your Email Address with OTP',
-                'otp'        => $otp,
-                'expires_at' => '10 minutes'
-            ];
+            $userTemp = UserTemp::updateOrCreate(
+                ['email' => $validated['email']], // Match by email
+                [
+                    'name' => $validated['name'],
+                    'phone' => $request->phone,
+                    'password' => bcrypt($validated['password']),
+                    'otp' => $otp,
+                    'otp_expires_at' => now()->addMinutes(10),
+                ]
+            );
 
-            // send email
-            Mail::to($user->email)->send(new EmailVerificationMail($data));
+            $this->sendOtpToUser($userTemp); // Reusable method for both temp and real users
 
-            return returnSuccess('OTP sent to your email.Please verify your email');
-
-            // return returnSuccess('User registered successfully', $data);
+            return returnSuccess('OTP sent to your email. Please verify your email');
         } catch (\Exception $e) {
             return returnError($e->getMessage());
         }
     }
 
+
+    public function resendOtp(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email',
+            ]);
+
+            if ($validator->fails()) {
+                return returnErrorWithData('Validation failed', $validator->errors());
+            }
+
+            $user = UserTemp::where('email', $request->email)->first();
+
+            if (!$user) {
+                $user = User::where('email', $request->email)->first();
+            }
+            if (!$user) {
+                return returnErrorWithData('User not found', [], 404);
+            }
+
+            $this->sendOtpToUser($user);
+
+            return returnSuccess('OTP sent to your email. Please verify your email');
+        } catch (\Exception $e) {
+            return returnError($e->getMessage());
+        }
+    }
+
+    private function sendOtpToUser($user)
+    {
+        $otp = random_int(100000, 999999);
+        $user->otp = $otp;
+        $user->otp_expires_at = now()->addMinutes(10);
+        $user->save();
+
+        $data = [
+            'name'       => $user->name,
+            'email'      => $user->email,
+            'subject'    => 'Verify Your Email Address with OTP',
+            'otp'        => $otp,
+            'expires_at' => '10 minutes'
+        ];
+
+        Mail::to($user->email)->send(new EmailVerificationMail($data));
+    }
+
     public function verifyOtp(Request $request)
     {
-        
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email|exists:users,email',
-            'otp' => 'required|digits:6'
+            'email' => ['required', 'email', function ($attribute, $value, $fail) {
+                $existsInUsers = \App\Models\User::where('email', $value)->exists();
+                $existsInTemp = \App\Models\UserTemp::where('email', $value)->exists();
 
+                if (!$existsInUsers && !$existsInTemp) {
+                    $fail("The $attribute does not exist in our records.");
+                }
+            }],
+            'otp' => 'required|digits:6'
         ]);
+
 
         if ($validator->fails()) {
             return returnErrorWithData('Validation failed', $validator->errors());
         }
 
-        $user = User::where('email', $request->email)->first();
+        $userTemp = UserTemp::where('email', $request->email)->first();
 
-        if (!$user) {
+        if (!$userTemp) {
+            $userTemp = User::where('email', $request->email)->first();
+        }
+        if (!$userTemp) {
             return returnError('User not found.');
         }
 
-        if ($user->otp !== $request->otp) {
+        if ($userTemp->otp !== $request->otp) {
             return returnError('Invalid OTP.');
         }
 
-        if ($user->otp_expires_at < now()) {
+        if ($userTemp->otp_expires_at < now()) {
             return returnError('OTP has expired.');
         }
 
-        // Optional: mark email as verified
-        $user->email_verified_at = now();
-        $user->otp = null;
-        $user->otp_expires_at = null;
-        $user->save();
+        if($request->is_forgot_password==true){
+             return returnSuccess('Email verified successfully.', $userTemp);
+        }
+
+        // Move to main users table
+        $user = User::create([
+            'name' => $userTemp->name,
+            'email' => $userTemp->email,
+            'phone' => $userTemp->phone,
+            'password' => $userTemp->password,
+            'email_verified_at' => now()
+        ]);
+
+        // Delete temp user
+        $userTemp->delete();
 
         return returnSuccess('Email verified successfully.', [
             'token' => $user->createToken('api-token')->plainTextToken,
@@ -124,10 +171,11 @@ class AuthController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return returnErrorWithData('Validation failed', $validator->errors());
+                return returnErrorWithData('Validation failed', $validator->errors(), 400);
             }
 
             $user = User::where('email', $request->email)->first();
+
 
             if (! $user || ! Hash::check($request->password, $user->password)) {
                 throw ValidationException::withMessages(['email' => ['Login credentials are incorrect.']]);

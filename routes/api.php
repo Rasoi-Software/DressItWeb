@@ -12,10 +12,11 @@ use App\Http\Controllers\API\StripeController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::post('/forgot-password-otp', [PasswordOtpController::class, 'sendOtp']);
-Route::post('/reset-password-otp', [PasswordOtpController::class, 'resetWithOtp']);
+Route::post('/reset-password', [PasswordOtpController::class, 'resetWithOtp']);
 Route::post('/stripe/webhook', [StripeController::class, 'handleWebhook']);
 
 

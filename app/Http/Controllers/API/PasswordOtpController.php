@@ -66,7 +66,6 @@ class PasswordOtpController extends Controller
         // ]);
         $validator = Validator::make($request->all(), [
                 'email' => 'required|email',
-                'otp' => 'required|digits:6',
                 'password' => 'required|string|min:6|confirmed',
             ]);
 
@@ -80,13 +79,7 @@ class PasswordOtpController extends Controller
             return returnError('Invalid email.');
         }
 
-        if (
-            !$user->otp ||
-            $user->otp !== $request->otp ||
-            Carbon::parse($user->otp_expires_at)->isPast()
-        ) {
-            return returnError('Invalid or expired OTP.');
-        }
+       
 
         $user->password = Hash::make($request->password);
         $user->otp = null;

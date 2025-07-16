@@ -49,7 +49,8 @@ class MessageController extends Controller
     {
         $userId = $request->user()->id;
 
-        $messages = Message::where('from_user_id', $userId)
+        $messages = Message::with(['sender', 'receiver'])
+             ->where('from_user_id', $userId)
             ->orWhere('to_user_id', $userId)
             ->latest()
             ->get()
@@ -61,8 +62,14 @@ class MessageController extends Controller
 
         foreach ($messages as $partnerId => $msgs) {
             $last = $msgs->first();
+        
+            // Determine the partner user object
+            $partner = $last->from_user_id == $userId ? $last->receiver : $last->sender;
+        
             $list[] = [
                 'user_id' => $partnerId,
+                'name' => $partner->name,
+                'profile_image' => $partner->profile_image, // Adjust to your DB column
                 'last_message' => $last->message,
                 'sent_at' => $last->created_at->diffForHumans(),
             ];

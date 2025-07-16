@@ -26,11 +26,12 @@ if (!function_exists('returnError')) {
     }
 }
 if (!function_exists('returnErrorWithData')) {
-    function returnErrorWithData($message, $data = null)
+    function returnErrorWithData($message, $data = null,$custom_code=null)
     {
         return response()->json([
             'status' => false,
             'message' => $message,
+            'custom_code' => $message,
             'data' => $data
         ], 200);
     }
