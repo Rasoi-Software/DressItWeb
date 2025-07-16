@@ -17,6 +17,32 @@ class Look extends Model
         'device_id',
         'status'
     ];
+    protected $appends = [
+        'count_likes',
+        'count_comments',
+        'is_like'
+    ];
+
+    public function getCountLikesAttribute()
+    {
+        return $this->likes()->count();
+    }
+
+    public function getCountCommentsAttribute()
+    {
+        return $this->comments()->count();
+    }
+    public function getIsLikeAttribute()
+    {
+        $authUser = auth()->user();
+
+        if (!$authUser) {
+            return false;
+        }
+
+        return $this->likes()->where('user_id', $authUser->id)->exists();
+    }
+
 
     public function user()
     {
