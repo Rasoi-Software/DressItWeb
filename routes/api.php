@@ -9,11 +9,14 @@ use App\Http\Controllers\API\LookCommentController;
 use App\Http\Controllers\API\MessageController;
 use App\Http\Controllers\API\FollowController;
 use App\Http\Controllers\API\StripeController;
+use App\Http\Controllers\API\OtpController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
 Route::post('/login', [AuthController::class, 'login']);
+
+Route::post('/send-otp-via-email', [OtpController::class, 'sendOtpEmail']);
 
 Route::post('/forgot-password-otp', [PasswordOtpController::class, 'sendOtp']);
 Route::post('/reset-password', [PasswordOtpController::class, 'resetWithOtp']);
