@@ -24,6 +24,9 @@ Route::post('/stripe/webhook', [StripeController::class, 'handleWebhook']);
 
 
 Route::post('/looks/draft', [LookController::class, 'storeWithoutLogin']);
+Route::get('/all-draft-looks/{id}', [LookController::class, 'all_draft_looks']);
+Route::get('/all-looks', [LookController::class, 'all_looks']);
+Route::get('/all-looks/{id}', [LookController::class, 'all_looks']);
 
 
 
@@ -35,8 +38,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/alluser', [UserController::class, 'alluser']);
 
     Route::get('/search/looks', [LookController::class, 'search_look']);
-    Route::get('/all-looks', [LookController::class, 'all_looks']);
-    Route::get('/all-looks/{id}', [LookController::class, 'all_looks']);
     Route::get('/looks', [LookController::class, 'index']);
     Route::post('/looks', [LookController::class, 'store']);
     Route::get('/looks/{id}', [LookController::class, 'show']);

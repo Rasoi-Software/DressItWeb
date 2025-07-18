@@ -17,14 +17,14 @@ class PasswordOtpController extends Controller
 {
     public function sendOtp(Request $request)
     {
-       // $request->validate(['email' => 'required|email']);
+        // $request->validate(['email' => 'required|email']);
         $validator = Validator::make($request->all(), [
-                'email' => 'required|email',
-            ]);
+            'email' => 'required|email',
+        ]);
 
-            if ($validator->fails()) {
-                return returnErrorWithData('Validation failed', $validator->errors());
-            }
+        if ($validator->fails()) {
+            return returnErrorWithData('Validation failed', $validator->errors());
+        }
 
         $user = User::where('email', $request->email)->first();
 
@@ -32,29 +32,19 @@ class PasswordOtpController extends Controller
             return returnError('Email not found.');
         }
 
+
+
         $otp = random_int(100000, 999999);
         $user->otp = $otp;
         $user->otp_expires_at = now()->addMinutes(10);
         $user->save();
+        $response = sendOtpEmail($user->email, $user->name, $otp);
 
-        // Send OTP via email
-        // Mail::raw("Your OTP is: {$otp}", function ($message) use ($user) {
-        //     $message->to($user->email)
-        //             ->subject('Password Reset OTP');
-        // });
-        // Generate OTP
-         $data = [];
-        $data['otp'] = $otp;
-        $data['email'] = $user->email;
-        $data['name'] = $user->name;
-        $data['subject'] = 'Your OTP for Password Reset';
-        $data['body'] = 'Your OTP is: ' . $otp;
-        $data['view'] = 'emails.forgot-password-send-otp'; 
-        $data['expires_at'] = $user->otp_expires_at;
-
-        Mail::to($user->email)->send(new ForgotPasswordSendOtpMail($data));
-
-        return returnSuccess('OTP sent to your email.');
+        if ($response->successful()) {
+            return returnSuccess('OTP sent successfully');
+        } else {
+            return returnError('Failed to send OTP', $response->json());
+        }
     }
 
     public function resetWithOtp(Request $request)
@@ -65,13 +55,13 @@ class PasswordOtpController extends Controller
         //     'password' => 'required|string|min:6|confirmed',
         // ]);
         $validator = Validator::make($request->all(), [
-                'email' => 'required|email',
-                'password' => 'required|string|min:6|confirmed',
-            ]);
+            'email' => 'required|email',
+            'password' => 'required|string|min:6|confirmed',
+        ]);
 
-            if ($validator->fails()) {
-                return returnErrorWithData('Validation failed', $validator->errors());
-            }
+        if ($validator->fails()) {
+            return returnErrorWithData('Validation failed', $validator->errors());
+        }
 
         $user = User::where('email', $request->email)->first();
 
@@ -79,7 +69,7 @@ class PasswordOtpController extends Controller
             return returnError('Invalid email.');
         }
 
-       
+
 
         $user->password = Hash::make($request->password);
         $user->otp = null;

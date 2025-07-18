@@ -162,8 +162,18 @@ class LookController extends Controller
         $looks = Look::with('media', 'user')->where('user_id', auth()->id())->latest()->paginate(5);
         return returnSuccess('Looks fetched successfully.', $looks);
     }
-    // ✅ Get All Looks
-    public function all_looks(Request $request, $user_id = null)
+    // ✅ Get All Looks all_draft_looks
+    public function all_draft_looks($id)
+    {
+        $query = Look::with('media', 'user')->latest();
+
+            $query->where('device_id', $id);
+        $query->where('status', 'draft');
+        
+        $looks = $query->paginate(5);
+
+        return returnSuccess('Looks fetched successfully.', $looks);
+    }  public function all_looks(Request $request, $user_id = null)
     {
         $query = Look::with('media', 'user')->latest();
 
@@ -234,6 +244,7 @@ class LookController extends Controller
         $look->set_goal = $request->set_goal;
         $look->description = $request->description;
         $look->location = $request->location;
+        $look->status = $request->status;
         $look->save();
 
         // if ($request->hasFile('media')) {

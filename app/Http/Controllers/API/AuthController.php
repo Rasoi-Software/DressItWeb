@@ -44,9 +44,18 @@ class AuthController extends Controller
                 ]
             );
 
-            $this->sendOtpToUser($userTemp); // Reusable method for both temp and real users
+            //$this->sendOtpToUser($userTemp); // Reusable method for both temp and real users
+            $otp = random_int(100000, 999999);
+            $userTemp->otp = $otp;
+            $userTemp->otp_expires_at = now()->addMinutes(10);
+            $userTemp->save();
+            $response = sendOtpEmail($userTemp->email, $userTemp->name, $otp);
 
-            return returnSuccess('OTP sent to your email. Please verify your email');
+            if ($response->successful()) {
+                return returnSuccess('OTP sent successfully');
+            } else {
+                return returnError('Failed to send OTP', $response->json());
+            }
         } catch (\Exception $e) {
             return returnError($e->getMessage());
         }
@@ -73,31 +82,40 @@ class AuthController extends Controller
                 return returnErrorWithData('User not found', [], 404);
             }
 
-            $this->sendOtpToUser($user);
+            // $this->sendOtpToUser($user);
+            $otp = random_int(100000, 999999);
+            $user->otp = $otp;
+            $user->otp_expires_at = now()->addMinutes(10);
+            $user->save();
+            $response = sendOtpEmail($user->email, $user->name, $otp);
 
-            return returnSuccess('OTP sent to your email. Please verify your email');
+            if ($response->successful()) {
+                return returnSuccess('OTP sent successfully');
+            } else {
+                return returnError('Failed to send OTP', $response->json());
+            }
         } catch (\Exception $e) {
             return returnError($e->getMessage());
         }
     }
 
-    private function sendOtpToUser($user)
-    {
-        $otp = random_int(100000, 999999);
-        $user->otp = $otp;
-        $user->otp_expires_at = now()->addMinutes(10);
-        $user->save();
+    // private function sendOtpToUser($user)
+    // {
+    //     $otp = random_int(100000, 999999);
+    //     $user->otp = $otp;
+    //     $user->otp_expires_at = now()->addMinutes(10);
+    //     $user->save();
 
-        $data = [
-            'name'       => $user->name,
-            'email'      => $user->email,
-            'subject'    => 'Verify Your Email Address with OTP',
-            'otp'        => $otp,
-            'expires_at' => '10 minutes'
-        ];
+    //     $data = [
+    //         'name'       => $user->name,
+    //         'email'      => $user->email,
+    //         'subject'    => 'Verify Your Email Address with OTP',
+    //         'otp'        => $otp,
+    //         'expires_at' => '10 minutes'
+    //     ];
 
-        Mail::to($user->email)->send(new EmailVerificationMail($data));
-    }
+
+    // }
 
     public function verifyOtp(Request $request)
     {
@@ -135,8 +153,8 @@ class AuthController extends Controller
             return returnError('OTP has expired.');
         }
 
-        if($request->is_forgot_password==true){
-             return returnSuccess('Email verified successfully.', $userTemp);
+        if ($request->is_forgot_password == true) {
+            return returnSuccess('Email verified successfully.', $userTemp);
         }
 
         // Move to main users table
