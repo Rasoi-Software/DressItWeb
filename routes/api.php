@@ -10,6 +10,7 @@ use App\Http\Controllers\API\MessageController;
 use App\Http\Controllers\API\FollowController;
 use App\Http\Controllers\API\StripeController;
 use App\Http\Controllers\API\OtpController;
+use App\Http\Controllers\API\LookCommentsReplyController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
@@ -54,6 +55,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/comments/{id}', [LookCommentController::class, 'show']);
     Route::put('/comments/{id}', [LookCommentController::class, 'update']);
     Route::delete('/comments/{id}', [LookCommentController::class, 'destroy']);
+
+    //reply master comment
+    Route::apiResource('look-comments-reply', LookCommentsReplyController::class);
 
 
     Route::post('/send-message', [MessageController::class, 'send']);

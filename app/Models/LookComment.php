@@ -26,4 +26,9 @@ class LookComment extends Model
     {
         return $this->belongsTo(Look::class);
     }
+
+    public function reply()
+    {
+        return $this->hasMany(LookCommentsReply::class);
+    }
 }

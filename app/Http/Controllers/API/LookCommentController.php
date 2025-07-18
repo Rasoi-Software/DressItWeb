@@ -57,7 +57,7 @@ class LookCommentController extends Controller
     public function index($lookId)
     {
         try {
-           $comments = LookComment::with('user')->where('look_id',$lookId)->get();
+           $comments = LookComment::with('user','reply')->where('look_id',$lookId)->get();
             return returnSuccess('Comments fetched successfully.', $comments);
         } catch (\Exception $e) {
             return returnError($e->getMessage());
@@ -67,7 +67,7 @@ class LookCommentController extends Controller
     public function show($id)
     {
         try {
-            $comment = LookComment::with('user')->findOrFail($id);
+            $comment = LookComment::with('user','reply')->findOrFail($id);
             return returnSuccess('Comment fetched successfully.', $comment);
         } catch (\Exception $e) {
             return returnError($e->getMessage());
