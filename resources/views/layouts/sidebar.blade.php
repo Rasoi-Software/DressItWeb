@@ -40,6 +40,13 @@
           <span class="nav-link-text ms-1">Manage Payment</span>
         </a>
       </li>
+      <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('admin.looks.*') ? 'active bg-gradient-dark text-white' : 'text-dark' }}"
+          href="{{ route('admin.looks.index') }}">
+          <i class="material-symbols-rounded opacity-5">table_view</i>
+          <span class="nav-link-text ms-1">Manage Look</span>
+        </a>
+      </li>
     </ul>
 
   </div>

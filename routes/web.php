@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\DashboardController;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\API\StripeController;
+use App\Http\Controllers\Admin\LookController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -26,6 +27,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('cities', CityController::class);
     Route::post('cities/import', [CityController::class, 'import'])->name('cities.import');
     Route::get('cities-export', [CityController::class, 'export'])->name('cities.export');
+    Route::get('looks/', [LookController::class, 'index'])->name('looks.index');
+    Route::get('looks/{id}', [LookController::class, 'show'])->name('looks.show');
+    Route::delete('looks/{id}', [LookController::class, 'destroy'])->name('looks.destroy');
 });
 
 
