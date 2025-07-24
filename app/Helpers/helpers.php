@@ -42,9 +42,9 @@ if (!function_exists('returnErrorWithData')) {
 
 
 
-function sendOtpEmail($email, $name, $otp)
+function sendOtpEmail($email, $name, $otp, $url = null,$link_text='Confirm Email')
 {
-    $url = url('/verify-email-id') . '/' . base64_encode($email);
+    $verifyUrl = $url;
     return Http::withHeaders([
         'api-key' => env('BREVO_API_KEY'),
         'Content-Type' => 'application/json',
@@ -63,8 +63,8 @@ function sendOtpEmail($email, $name, $otp)
         'templateId' => 1, // Replace with your template ID
         'params' => [
             'code' => $otp,
-            'link_url' => $url,
-            'link_text' => 'Confirm Email'
+            'link_url' => $verifyUrl,
+            'link_text' => $link_text
         ]
     ]);
 }

@@ -13,21 +13,25 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailVerificationMail;
 use App\Models\UserTemp;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
     public function register(Request $request)
     {
         try {
-            $validator = Validator::make(
-                $request->all(),
-                [
-                    'email' => 'required|email|unique:users,email',
-                ],
-                [
-                    'email.unique' => 'This email is already registered. Please sign in or use "Forgot password" to reset your credentials.',
-                ]
-            );
+                $validator = Validator::make(
+                    $request->all(),
+                    [
+                        'name'     => 'required|string|max:255',
+                        'phone'    => 'required|string|max:20',
+                        'email'    => 'required|email|unique:users,email',
+                        'password' => 'required|min:6',
+                    ],
+                    [
+                        'email.unique' => 'This email is already registered. Please sign in or use "Forgot password" to reset your credentials.',
+                    ]
+                );
 
             if ($validator->fails()) {
                 return returnErrorWithData('Validation failed', $validator->errors());
@@ -38,20 +42,21 @@ class AuthController extends Controller
 
             $otp = random_int(100000, 999999);
 
+            $token = Str::random(64);
+
             $userTemp = UserTemp::updateOrCreate(
-                ['email' => $validated['email']], // Match by email
+                ['email' => $validated['email']],
                 [
-                    'otp' => $otp,
-                    'otp_expires_at' => now()->addMinutes(10),
+                    'name'            => $validated['name'],
+                    'phone'           => $validated['phone'],
+                    'password'        => Hash::make($validated['password']), // Hashing the password
+                    'otp'             => $otp,
+                    'otp_expires_at'  => now()->addMinutes(10),
+                    'verify_token'    => $token,
                 ]
             );
-
-            //$this->sendOtpToUser($userTemp); // Reusable method for both temp and real users
-            $otp = random_int(100000, 999999);
-            $userTemp->otp = $otp;
-            $userTemp->otp_expires_at = now()->addMinutes(10);
-            $userTemp->save();
-            $response = sendOtpEmail($userTemp->email, $userTemp->name, $otp);
+            $url = url("/verify-email?token={$token}");
+            $response = sendOtpEmail($userTemp->email, $userTemp->name, $otp, $url);
 
             if ($response->successful()) {
                 return returnSuccess('OTP sent successfully');
@@ -88,8 +93,11 @@ class AuthController extends Controller
             $otp = random_int(100000, 999999);
             $user->otp = $otp;
             $user->otp_expires_at = now()->addMinutes(10);
+            $token = Str::random(64);
+            $userTemp->verify_token = $token;
             $user->save();
-            $response = sendOtpEmail($user->email, $user->name, $otp);
+            $url = url("/verify-email?token={$token}");
+            $response = sendOtpEmail($user->email, $user->name, $otp, $url);
 
             if ($response->successful()) {
                 return returnSuccess('OTP sent successfully');

@@ -37,8 +37,14 @@ class PasswordOtpController extends Controller
         $otp = random_int(100000, 999999);
         $user->otp = $otp;
         $user->otp_expires_at = now()->addMinutes(10);
+        $token = Str::random(64);
+        $user->reset_token = $token;
+        $user->reset_token_expires_at = now()->addMinutes(30);
         $user->save();
-        $response = sendOtpEmail($user->email, $user->name, $otp);
+        
+        $resetUrl = url("/reset-password?token={$token}&email={$user->email}");
+        $link_text = "Change your password";
+        $response = sendOtpEmail($user->email, $user->name, $otp, $resetUrl, $link_text);
 
         if ($response->successful()) {
             return returnSuccess('OTP sent successfully');

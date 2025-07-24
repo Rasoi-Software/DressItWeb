@@ -32,6 +32,9 @@ class User extends Authenticatable
         'gender',
         'interested_in',
         'dob',
+        'email_verified_at',
+         'reset_token',
+         'reset_token_expires_at', 
     ];
 
     /**

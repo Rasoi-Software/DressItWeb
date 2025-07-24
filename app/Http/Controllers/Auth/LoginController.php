@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\UserTemp;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class LoginController extends Controller
 {
@@ -39,9 +42,69 @@ class LoginController extends Controller
         return redirect('/admin/login');
     }
 
-    public function verifyemailid($id){
+    public function verifyemailid(Request $request)
+    {
+        $token = $request->query('token');
+
+        $userTemp = UserTemp::where('verify_token', $token)
+            ->where('otp_expires_at', '>', now())
+            ->first();
+
+        if (!$userTemp) {
+            return response()->json(['message' => 'Invalid or expired token'], 400);
+        }
+
+        // Create real user or mark as verified
+        $user = User::create([
+            'email' => $userTemp->email,
+            'name' => $userTemp->name,
+            'phone' => $userTemp->phone,
+            'email_verified_at' => now(),
+            'password' => $userTemp->password,
+            // Add name, password, etc.
+        ]);
+
+        // Clean up temp record
+        $userTemp->delete();
+
         return view('auth.verifyemailid'); 
     }
+
+    public function showResetForm(Request $request)
+    {
+        $token = $request->get('token');
+        $email = $request->get('email');
+
+        return view('auth.reset_password', compact('token', 'email'));
+    }
+
+    public function submitResetPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'token' => 'required',
+            'password' => 'required|min:6|confirmed',
+        ]);
+
+        $user = User::where('email', $request->email)
+            ->where('reset_token', $request->token)
+            ->where('reset_token_expires_at', '>', now())
+            ->first();
+
+        if (!$user) {
+            return redirect()->back()->with('error', 'Invalid or expired token.');
+        }
+
+        $user->password = Hash::make($request->password);
+        $user->reset_token = null;
+        $user->reset_token_expires_at = null;
+        $user->save();
+
+        return redirect('/login')->with('success', 'Password has been reset successfully.');
+    }
+
+
+
 }
 
 

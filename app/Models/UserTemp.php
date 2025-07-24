@@ -15,5 +15,6 @@ class UserTemp extends Model
         'password',
         'otp',
         'otp_expires_at',
+        'verify_token'
     ];
 }
