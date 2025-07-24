@@ -19,12 +19,16 @@
                                     <th class="text-uppercase text-secondary text-xs font-weight-bolder">#</th>
                                     <th class="text-uppercase text-secondary text-xs font-weight-bolder">User</th>
                                     <th class="text-uppercase text-secondary text-xs font-weight-bolder text-center">Amount</th>
+                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder text-center">Service Fee</th>
+                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder text-center">Processing Fee</th>
+                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder text-center">Total Charged</th>
                                     <th class="text-uppercase text-secondary text-xs font-weight-bolder text-center">Currency</th>
                                     <th class="text-uppercase text-secondary text-xs font-weight-bolder text-center">Status</th>
                                     <th class="text-uppercase text-secondary text-xs font-weight-bolder text-center">Payment ID</th>
                                     <th class="text-uppercase text-secondary text-xs font-weight-bolder text-center">Created</th>
                                 </tr>
                             </thead>
+
                             <tbody>
                                 @forelse ($payments as $index => $payment)
                                 <tr>
@@ -40,7 +44,10 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="text-center">₹{{ number_format($payment->amount / 100, 2) }}</td>
+                                    <td class="text-center">${{ number_format($payment->amount / 100, 2) }}</td>
+                                    <td class="text-center">${{ number_format($payment->service_fee / 100 ?? 0, 2) }}</td>
+                                    <td class="text-center">${{ number_format($payment->processing_fee / 100 ?? 0, 2) }}</td>
+                                    <td class="text-center">${{ number_format($payment->total_charged / 100 ?? 0, 2) }}</td>
                                     <td class="text-center">{{ strtoupper($payment->currency) }}</td>
                                     <td class="text-center">
                                         @if($payment->status === 'succeeded')

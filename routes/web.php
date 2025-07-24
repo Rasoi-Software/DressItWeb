@@ -15,6 +15,7 @@ Route::get('/', function () {
 });
 
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::get('verify-email-id/{id}', [LoginController::class, 'verifyemailid'])->name('verifyemailid');
 Route::get('admin/login', [LoginController::class, 'showLoginForm'])->name('admin.login');
 Route::post('admin/login', [LoginController::class, 'login'])->name('admin.login.submit');
 Route::post('admin/logout', [LoginController::class, 'logout'])->name('admin.logout');

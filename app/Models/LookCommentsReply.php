@@ -11,11 +11,16 @@ class LookCommentsReply extends Model
 
     protected $fillable = [
         'look_comment_id',
+        'user_id',
         'content',
     ];
 
     public function comment()
     {
         return $this->belongsTo(LookComment::class, 'look_comment_id');
+    }
+     public function user()
+    {
+        return $this->belongsTo(User::class)->select('id', 'name', 'email', 'profile_image');
     }
 }

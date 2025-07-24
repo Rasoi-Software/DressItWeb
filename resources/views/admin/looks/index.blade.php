@@ -18,8 +18,8 @@
                                     <th>#</th>
                                     <th>User</th>
                                     <th>Goal</th>
-                                    <th>Location</th>
-                                    <th>Description</th>
+                                    <th>Media</th>
+                                    <th>Status</th>
                                     <th>Created</th>
                                     <th>Actions</th>
                                 </tr>
@@ -29,6 +29,7 @@
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
                                     <td>
+                                        @if(isset($look->user->name))
                                         <div class="d-flex px-2 py-1 align-items-center">
                                             <div>
                                                 <img src="{{ $look->user->profile_image ?? '' }}" class="avatar avatar-sm me-3 border-radius-lg" alt="user">
@@ -38,10 +39,20 @@
                                                 <p class="text-xs text-secondary mb-0">{{ $look->user->email ?? '' }}</p>
                                             </div>
                                         </div>
+                                        @else
+
+                                        <div class="d-flex px-2 py-1 align-items-center">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">Device ID </h6>
+                                                <p class="text-xs text-secondary mb-0">{{$look->device_id}}</p>
+                                            </div>
+                                        </div>
+                                        @endif
+
                                     </td>
                                     <td>{{ $look->set_goal }}</td>
-                                    <td>{{ $look->location }}</td>
-                                    <td>{{ Str::limit($look->description, 50) }}</td>
+                                    <td>{{ count($look->media) }}</td>
+                                    <td>{{ $look->status }}</td>
                                     <td>{{ $look->created_at->format('d M, Y H:i') }}</td>
                                     <td>
                                         <a href="{{ route('admin.looks.show', $look->id) }}" class="btn btn-info btn-sm">View</a>

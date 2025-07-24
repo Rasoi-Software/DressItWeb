@@ -26,7 +26,7 @@ if (!function_exists('returnError')) {
     }
 }
 if (!function_exists('returnErrorWithData')) {
-    function returnErrorWithData($message, $data = null,$custom_code=null)
+    function returnErrorWithData($message, $data = null, $custom_code = null)
     {
         return response()->json([
             'status' => false,
@@ -42,26 +42,29 @@ if (!function_exists('returnErrorWithData')) {
 
 
 
- function sendOtpEmail($email, $name, $otp)
-    {
-        return Http::withHeaders([
-            'api-key' => env('BREVO_API_KEY'),
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-        ])->post('https://api.brevo.com/v3/smtp/email', [
-            'sender' => [
-                'name' => 'Dress It',
-                'email' => 'no-reply@dressitnow.com'
-            ],
-            'to' => [
-                [
-                    'email' => $email,
-                    'name' => $name
-                ]
-            ],
-            'templateId' => 1, // Replace with your template ID
-            'params' => [
-                'code' => $otp
+function sendOtpEmail($email, $name, $otp)
+{
+    $url = url('/verify-email-id') . '/' . base64_encode($email);
+    return Http::withHeaders([
+        'api-key' => env('BREVO_API_KEY'),
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+    ])->post('https://api.brevo.com/v3/smtp/email', [
+        'sender' => [
+            'name' => 'Dress It',
+            'email' => 'no-reply@dressitnow.com'
+        ],
+        'to' => [
+            [
+                'email' => $email,
+                'name' => $name
             ]
-        ]);
-    }
+        ],
+        'templateId' => 1, // Replace with your template ID
+        'params' => [
+            'code' => $otp,
+            'link_url' => $url,
+            'link_text' => 'Confirm Email'
+        ]
+    ]);
+}

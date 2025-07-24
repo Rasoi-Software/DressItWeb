@@ -38,5 +38,10 @@ class LoginController extends Controller
 
         return redirect('/admin/login');
     }
+
+    public function verifyemailid($id){
+        return view('auth.verifyemailid'); 
+    }
 }
+
 

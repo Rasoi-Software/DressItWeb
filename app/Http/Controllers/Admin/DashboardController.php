@@ -15,9 +15,9 @@ class DashboardController extends Controller
     {
         $data = [
             'total_users'       => User::count(),
-            'total_payments'    => Payment::sum('amount'),
+            'total_payments'    => (Payment::sum('total_charged')/100),
             'total_looks'       => Look::count(),
-            'today_payments'    => Payment::whereDate('created_at', Carbon::today())->sum('amount'),
+            'today_payments'    => (Payment::whereDate('created_at', Carbon::today())->sum('total_charged')/100),
         ];
 
         return view('admin.dashboard', compact('data'));

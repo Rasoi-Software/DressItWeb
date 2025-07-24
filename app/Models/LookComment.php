@@ -29,6 +29,6 @@ class LookComment extends Model
 
     public function reply()
     {
-        return $this->hasMany(LookCommentsReply::class);
+        return $this->hasMany(LookCommentsReply::class)->with('user');
     }
 }

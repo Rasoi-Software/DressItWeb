@@ -126,7 +126,7 @@ class StripeController extends Controller
     public function chargeCustomer(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'amount' => 'required|integer|min:1',
+            'amount' => 'required|numeric|min:1',
         ]);
 
         if ($validator->fails()) {
@@ -136,9 +136,24 @@ class StripeController extends Controller
         try {
             $user = User::findOrFail(auth()->id());
 
-            // Create payment intent using your Stripe service
+            $baseAmount = (float) $request->amount; // amount user wants to send
+
+            // Fee settings (you can make this configurable)
+            $serviceFeeRate = 0.10; // 10%
+            $processingFeeRate = 0.029; // 2.9%
+            $fixedProcessingFee = 0.30; // $0.30
+
+            // Calculate fees
+            $serviceFee = $baseAmount * $serviceFeeRate;
+            $subTotal = $baseAmount + $serviceFee;
+
+            // Gross-up to include Stripe fee
+            $totalToCharge = ($subTotal + $fixedProcessingFee) / (1 - $processingFeeRate);
+            $totalToChargeCents = round($totalToCharge * 100); // Stripe uses cents
+
+            // Create payment intent
             $intent = $this->stripe->createPaymentIntent(
-                $request->amount,
+                $totalToChargeCents,
                 'USD',
                 $user->stripe_customer_id,
                 $user->stripe_pm_id
@@ -149,18 +164,30 @@ class StripeController extends Controller
                 'user_id'           => $user->id,
                 'payment_intent_id' => $intent->id,
                 'payment_method_id' => $intent->payment_method,
-                'amount'            => ($intent->amount / 100),
+                'amount'            => $baseAmount,
                 'currency'          => $intent->currency,
                 'status'            => $intent->status,
                 'description'       => $intent->description ?? 'Payment via Stripe',
                 'response'          => json_encode($intent),
+                'service_fee'       => round($serviceFee, 2),
+                'processing_fee'    => round($totalToCharge - $subTotal, 2),
+                'total_charged'     => round($totalToCharge, 2),
             ]);
 
-            return returnSuccess('Payment successful', $intent);
+            return returnSuccess('Payment successful', [
+                'intent' => $intent,
+                'amount_breakdown' => [
+                    'base_amount'     => round($baseAmount, 2),
+                    'service_fee'     => round($serviceFee, 2),
+                    'processing_fee'  => round($totalToCharge - $subTotal, 2),
+                    'total_to_charge' => round($totalToCharge, 2),
+                ]
+            ]);
         } catch (\Exception $e) {
             return returnError($e);
         }
     }
+
 
 
     public function createConnectedAccount(Request $request)

@@ -57,7 +57,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/comments/{id}', [LookCommentController::class, 'destroy']);
 
     //reply master comment
-    Route::apiResource('look-comments-reply', LookCommentsReplyController::class);
+    //Route::apiResource('look-comments-reply', LookCommentsReplyController::class);
+    Route::get('/look-comments-reply', [LookCommentsReplyController::class, 'index']);
+    Route::post('/look-comments-reply', [LookCommentsReplyController::class, 'store']);
+    Route::get('/look-comments-reply/{id}', [LookCommentsReplyController::class, 'show']);
+    Route::put('/look-comments-reply/{id}', [LookCommentsReplyController::class, 'update']);
+    Route::delete('/look-comments-reply/{id}', [LookCommentsReplyController::class, 'destroy']);
 
 
     Route::post('/send-message', [MessageController::class, 'send']);

@@ -31,12 +31,18 @@ class LookCommentsReplyController extends Controller
         }
 
         try {
-            $reply = LookCommentsReply::create($request->only(['look_comment_id', 'content']));
+            $reply = LookCommentsReply::create([
+                'look_comment_id' => $request->look_comment_id,
+                'content' => $request->content,
+                'user_id' => auth()->id(), // Set authenticated user ID
+            ]);
+
             return returnSuccess('Reply added.', $reply);
         } catch (\Exception $e) {
             return returnError($e->getMessage());
         }
     }
+
 
     public function show($id)
     {

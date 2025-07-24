@@ -71,20 +71,25 @@ class LookController extends Controller
     public function afterLoginAssignDrafts(Request $request)
     {
         $request->validate([
-            'device_id' => 'required|uuid',
+            'device_id' => 'required',
             'status' => 'required',
         ]);
 
         $user = auth()->user();
-
-        Look::where('device_id', $request->device_id)
+        $count = Look::where('device_id', $request->device_id)
             ->whereNull('user_id')
-            ->update([
-                'user_id' => $user->id,
-                'status' => $request->status,
-            ]);
-
-        return returnSuccess('Drafts assigned successfully');
+            ->count();
+        if ($count > 0) {
+            Look::where('device_id', $request->device_id)
+                ->whereNull('user_id')
+                ->update([
+                    'user_id' => $user->id,
+                    'status' => $request->status,
+                ]);
+            return returnSuccess('Drafts assigned successfully');
+        } else {
+            return returnError('No Look found in draft');
+        }
     }
 
     // ✅ Create Look
@@ -167,13 +172,14 @@ class LookController extends Controller
     {
         $query = Look::with('media', 'user')->latest();
 
-            $query->where('device_id', $id);
+        $query->where('device_id', $id);
         $query->where('status', 'draft');
-        
+
         $looks = $query->paginate(5);
 
         return returnSuccess('Looks fetched successfully.', $looks);
-    }  public function all_looks(Request $request, $user_id = null)
+    }
+    public function all_looks(Request $request, $user_id = null)
     {
         $query = Look::with('media', 'user')->latest();
 
@@ -181,7 +187,7 @@ class LookController extends Controller
             $query->where('user_id', $user_id);
         }
         $query->where('status', 'published');
-        
+
         $looks = $query->paginate(5);
 
         return returnSuccess('Looks fetched successfully.', $looks);
@@ -193,7 +199,7 @@ class LookController extends Controller
         $search = $request->q;
 
         $looks = Look::with('media', 'user')
-        ->where('status', 'published')
+            ->where('status', 'published')
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('set_goal', 'like', "%{$search}%")

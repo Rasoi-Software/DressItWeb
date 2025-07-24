@@ -19,15 +19,20 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:users,email',
-                'password' => 'required|string|min:6|confirmed',
-            ]);
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'email' => 'required|email|unique:users,email',
+                ],
+                [
+                    'email.unique' => 'This email is already registered. Please sign in or use "Forgot password" to reset your credentials.',
+                ]
+            );
 
             if ($validator->fails()) {
                 return returnErrorWithData('Validation failed', $validator->errors());
             }
+
 
             $validated = $validator->validated();
 
@@ -36,9 +41,6 @@ class AuthController extends Controller
             $userTemp = UserTemp::updateOrCreate(
                 ['email' => $validated['email']], // Match by email
                 [
-                    'name' => $validated['name'],
-                    'phone' => $request->phone,
-                    'password' => bcrypt($validated['password']),
                     'otp' => $otp,
                     'otp_expires_at' => now()->addMinutes(10),
                 ]

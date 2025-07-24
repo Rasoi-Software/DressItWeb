@@ -17,6 +17,9 @@ class Payment extends Model
         'status',
         'description',
         'response',
+        'service_fee',
+        'processing_fee',
+        'total_charged'
     ];
 
     public function user()
