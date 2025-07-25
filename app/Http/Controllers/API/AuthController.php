@@ -23,10 +23,10 @@ class AuthController extends Controller
                 $validator = Validator::make(
                     $request->all(),
                     [
-                        'name'     => 'required|string|max:255',
-                        'phone'    => 'required|string|max:20',
+                       // 'name'     => 'required|string|max:255',
+                       // 'phone'    => 'required|string|max:20',
                         'email'    => 'required|email|unique:users,email',
-                        'password' => 'required|min:6',
+                       // 'password' => 'required|min:6',
                     ],
                     [
                         'email.unique' => 'This email is already registered. Please sign in or use "Forgot password" to reset your credentials.',
@@ -47,9 +47,6 @@ class AuthController extends Controller
             $userTemp = UserTemp::updateOrCreate(
                 ['email' => $validated['email']],
                 [
-                    'name'            => $validated['name'],
-                    'phone'           => $validated['phone'],
-                    'password'        => Hash::make($validated['password']), // Hashing the password
                     'otp'             => $otp,
                     'otp_expires_at'  => now()->addMinutes(10),
                     'verify_token'    => $token,

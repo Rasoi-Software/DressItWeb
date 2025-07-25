@@ -13,6 +13,9 @@ use App\Http\Controllers\Admin\LookController;
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get('/phpinfo', function () {
+    return phpinfo();
+});
 
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::get('verify-email', [LoginController::class, 'verifyemailid'])->name('verifyemailid');

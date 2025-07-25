@@ -41,6 +41,18 @@
                         <div class="col-xl-4 col-lg-5 col-md-7 d-flex flex-column ms-auto me-auto ms-lg-auto me-lg-5 border rounded shadow p-4 bg-white">
                             <div class="card card-plain">
                                 <div class="card-header">
+                                    @if(session('success'))
+                                    <div class="alert alert-success">
+                                        {{ session('success') }}
+                                    </div>
+                                    @endif
+
+                                    @if(session('error'))
+                                    <div class="alert alert-danger">
+                                        {{ session('error') }}
+                                    </div>
+                                    @endif
+
                                     <h4 class="font-weight-bolder">Login</h4>
                                     <p class="mb-0">Enter your email and password to Login</p>
                                 </div>

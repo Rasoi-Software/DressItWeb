@@ -20,7 +20,7 @@ class LookController extends Controller
             'device_id' => 'required',
             'description' => 'nullable|string',
             'location' => 'nullable|string|max:255',
-            'media.*' => 'nullable|file|mimes:jpeg,png,jpg,mp4,mov,avi|max:10240', // 10MB
+            'media.*' => 'required|file|mimes:jpeg,png,jpg,mp4,mov,avi|max:204800', // 10MB
         ]);
 
         if ($validator->fails()) {
@@ -99,7 +99,7 @@ class LookController extends Controller
             'set_goal' => 'required|string|max:255',
             'description' => 'nullable|string',
             'location' => 'nullable|string|max:255',
-            'media.*' => 'nullable|file|mimes:jpeg,png,jpg,mp4,mov,avi|max:10240', // 10MB
+            'media.*' => 'required|file|mimes:jpeg,png,jpg,mp4,mov,avi|max:204800', // 10MB
         ]);
 
         if ($validator->fails()) {
@@ -216,7 +216,7 @@ class LookController extends Controller
     // ✅ Show Single Look
     public function show($id)
     {
-        $look = Look::with('media', 'user')->where('id', $id)->where('user_id', auth()->id())->first();
+        $look = Look::with('media', 'user')->where('id', $id)->first();
 
         if (!$look) {
             return returnError('Look not found.');
@@ -235,10 +235,8 @@ class LookController extends Controller
         }
         //dd($request->all());
         $validator = Validator::make($request->all(), [
-            'set_goal' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
             'location' => 'nullable|string|max:255',
-            'media.*' => 'nullable|file|mimes:jpeg,png,jpg,mp4,mov,avi|max:10240', // 10MB
         ]);
 
         if ($validator->fails()) {
@@ -247,40 +245,13 @@ class LookController extends Controller
 
 
         // Update look fields
-        $look->set_goal = $request->set_goal;
         $look->description = $request->description;
         $look->location = $request->location;
-        $look->status = $request->status;
+        $look->status = 'published';
         $look->save();
 
-        // if ($request->hasFile('media')) {
-        //     foreach ($request->file('media') as $file) {
-        //         $originalName = $file->getClientOriginalName();
-        //         $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-
-        //         $baseName = uniqid() . '_' . pathinfo($originalName, PATHINFO_FILENAME);
-        //         $baseName = preg_replace('/[^a-zA-Z0-9\-_]/', '', $baseName);
-        //         $baseName = strtolower($baseName);
-        //         $fileName = $baseName . '.' . $extension;
-
-        //         $filePath = 'looks/media/' . $fileName;
-
-        //         try {
-        //             Storage::disk('s3')->put($filePath, file_get_contents($file), ['visibility' => 'public']);
-
-        //             $mimeType = $file->getMimeType();
-        //             $type = str_contains($mimeType, 'video') ? 'video' : 'image';
-
-        //             $look->media()->create([
-        //                 'media_path' => $filePath,
-        //                 'media_type' => $type,
-        //             ]);
-        //         } catch (\Exception $e) {
-        //             // Handle error (log, return response, etc.)
-        //         }
-        //     }
-        // }
-        return returnSuccess('Look updated successfully.', $look->load('media'));
+       
+        return returnSuccess('Look updated successfully.', $look);
     }
 
     // ✅ Delete Look

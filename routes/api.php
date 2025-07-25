@@ -28,6 +28,7 @@ Route::post('/looks/draft', [LookController::class, 'storeWithoutLogin']);
 Route::get('/all-draft-looks/{id}', [LookController::class, 'all_draft_looks']);
 Route::get('/all-looks', [LookController::class, 'all_looks']);
 Route::get('/all-looks/{id}', [LookController::class, 'all_looks']);
+Route::get('/looks/{id}', [LookController::class, 'show']);
 
 
 
@@ -41,7 +42,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/search/looks', [LookController::class, 'search_look']);
     Route::get('/looks', [LookController::class, 'index']);
     Route::post('/looks', [LookController::class, 'store']);
-    Route::get('/looks/{id}', [LookController::class, 'show']);
     Route::put('/looks/{id}', [LookController::class, 'update']);
     Route::delete('/looks/{id}', [LookController::class, 'destroy']);
     Route::post('/looks-assign-drafts', [LookController::class, 'afterLoginAssignDrafts']);
