@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 use App\Models\Message;
 use App\Models\MessageAttachment;
 use App\Events\ChatMessageEvent;
+use App\Models\Payment;
 
 
 class MessageController extends Controller
@@ -42,36 +43,57 @@ class MessageController extends Controller
         if ($totalSize > 100 * 1024 * 1024) { // 100MB
             return returnError('Total image size exceeds 100MB.');
         }
+        // Check if successful payment exists in either direction
+        $fromUserId = $request->user()->id;
+        $toUserId = $request->to_user_id;
+        $paymentExists = Payment::where('status', 'succeeded')
+            ->where(function ($query) use ($fromUserId, $toUserId) {
+                $query->where(function ($q) use ($fromUserId, $toUserId) {
+                    $q->where('user_id', $fromUserId)
+                    ->where('to_user_id', $toUserId);
+                })->orWhere(function ($q) use ($fromUserId, $toUserId) {
+                    $q->where('user_id', $toUserId)
+                    ->where('to_user_id', $fromUserId);
+                });
+            })
+            ->exists();
+
+        if ($paymentExists) {
         
+            $data = Message::create([
+                'from_user_id' => $request->user()->id,
+                'to_user_id' => $request->to_user_id,
+                'message' => $request->message,
+            ]);
 
-        $data = Message::create([
-            'from_user_id' => $request->user()->id,
-            'to_user_id' => $request->to_user_id,
-            'message' => $request->message,
-        ]);
+            // Handle attachments
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $path = $file->store("chat/attachments", 's3');
+                    \Storage::disk('s3')->setVisibility($path, 'public');
+                    //$url = \Storage::disk('s3')->url($path);
 
-        // Handle attachments
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store("chat/attachments", 's3');
-                \Storage::disk('s3')->setVisibility($path, 'public');
-                //$url = \Storage::disk('s3')->url($path);
-
-                MessageAttachment::create([
-                    'message_id' => $data->id,
-                    'file_path' => $path,
-                    'file_name' => $file->getClientOriginalName(),
-                    'mime_type' => $file->getMimeType(),
-                    'size' => $file->getSize(),
-                ]);
+                    MessageAttachment::create([
+                        'message_id' => $data->id,
+                        'file_path' => $path,
+                        'file_name' => $file->getClientOriginalName(),
+                        'mime_type' => $file->getMimeType(),
+                        'size' => $file->getSize(),
+                    ]);
+                }
             }
+    
+
+            event(new ChatMessageEvent($data->toArray()));
+            //broadcast(new ChatMessageEvent($data->toArray()))->toOthers();
+
+            return response()->json(['status' => 'Message Sent', 'data' => $data]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'You must have a successful payment to send a message.',
+            ], 403);
         }
-  
-
-        event(new ChatMessageEvent($data->toArray()));
-          //broadcast(new ChatMessageEvent($data->toArray()))->toOthers();
-
-        return response()->json(['status' => 'Message Sent', 'data' => $data]);
     }
     
     /**

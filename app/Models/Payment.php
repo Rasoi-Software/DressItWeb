@@ -10,6 +10,7 @@ class Payment extends Model
 {
     protected $fillable = [
         'user_id',
+        'to_user_id',
         'payment_intent_id',
         'payment_method_id',
         'amount',
