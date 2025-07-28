@@ -127,6 +127,7 @@ class StripeController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'amount' => 'required|numeric|min:1',
+            'to_user_id' => 'required'
         ]);
 
         if ($validator->fails()) {
@@ -162,6 +163,7 @@ class StripeController extends Controller
             // Store in DB
             Payment::create([
                 'user_id'           => $user->id,
+                'to_user_id'        => $request->to_user_id,
                 'payment_intent_id' => $intent->id,
                 'payment_method_id' => $intent->payment_method,
                 'amount'            => $baseAmount,
