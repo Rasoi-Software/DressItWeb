@@ -187,6 +187,26 @@ class LookController extends Controller
             $query->where('user_id', $user_id);
         }
         $query->where('status', 'published');
+        $query->where('status', 'published');
+
+        // Apply filters on related user model
+        $query->whereHas('user', function ($q) use ($request) {
+            if ($request->has('location')) {
+                $q->where('location', 'like', '%' . $request->location . '%');
+            }
+
+            if ($request->has('age')) {
+                $q->where('age', $request->age);
+            }
+
+            if ($request->has('gender')) {
+                $q->where('gender', 'like', '%' . $request->gender . '%');
+            }
+
+            if ($request->has('orientation')) {
+                $q->where('orientation', 'like', '%' . $request->orientation . '%');
+            }
+        });
 
         $looks = $query->paginate(5);
 
