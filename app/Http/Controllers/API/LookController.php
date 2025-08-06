@@ -204,7 +204,7 @@ class LookController extends Controller
             }
 
             if ($request->has('orientation')) {
-                $q->where('orientation', 'like', '%' . $request->orientation . '%');
+                $q->where('interested_in', 'like', '%' . $request->orientation . '%');
             }
         });
 
