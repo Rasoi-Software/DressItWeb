@@ -17,10 +17,10 @@
             <h6 class="text-white text-capitalize mb-0">Cities List</h6>
             <div class="d-flex align-items-center gap-2">
 
-              <a href="{{ route('admin.cities.create') }}" class="btn btn-light text-dark">Add New City</a>
+              {{-- <a href="{{ route('admin.cities.create') }}" class="btn btn-light text-dark">Add New City</a>
               <a href="#" class="btn btn-light text-dark" data-bs-toggle="modal" data-bs-target="#importCitiesModal">
                 Import Cities
-              </a>
+              </a> --}}
             </div>
           </div>
         </div>
@@ -31,6 +31,7 @@
               <thead>
                 <tr>
                   <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Name</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Country Code</th>
                   <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                   <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Created Date</th>
                   <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Action</th>
@@ -45,6 +46,14 @@
 
                       <div class="d-flex flex-column justify-content-center">
                         <h6 class="mb-0 text-sm">{{$city->name}}</h6>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="d-flex px-2 py-1">
+
+                      <div class="d-flex flex-column justify-content-center">
+                        <h6 class="mb-0 text-sm">{{$city->country_code}}</h6>
                       </div>
                     </div>
                   </td>

@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\Payment;
 use Stripe\Webhook;
 use Stripe\Stripe;
+use App\Models\Look;
 
 class StripeController extends Controller
 {
@@ -135,7 +136,11 @@ class StripeController extends Controller
         }
 
         try {
-            $user = User::findOrFail(auth()->id());
+            $user = User::find(auth()->id());
+            $look = Look::where('id', $request->look_id)->first();
+            if (empty($look)) {
+                return returnError('Look not found');
+            }
 
             $baseAmount = (float) $request->amount; // amount user wants to send
 
@@ -163,7 +168,8 @@ class StripeController extends Controller
             // Store in DB
             Payment::create([
                 'user_id'           => $user->id,
-                'to_user_id'        => $request->to_user_id,
+                'to_user_id'        => $look->user_id,
+                'look_id'           => $request->look_id,
                 'payment_intent_id' => $intent->id,
                 'payment_method_id' => $intent->payment_method,
                 'amount'            => $baseAmount,

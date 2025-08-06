@@ -7,6 +7,11 @@
 </head>
 
 <body>
+    @if(session('error'))
+    <div class="alert alert-danger">
+        {{ session('error') }}
+    </div>
+    @endif
 
     <h2>Waiting for Pusher Event...</h2>
     <div id="output">No event yet</div>

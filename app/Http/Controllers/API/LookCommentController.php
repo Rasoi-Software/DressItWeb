@@ -19,10 +19,13 @@ class LookCommentController extends Controller
 
             if ($look->likes()->where('user_id', $user->id)->exists()) {
                 $look->likes()->detach($user->id);
-                return returnSuccess('Unliked successfully.');
+                $look = Look::find($lookId);
+
+                return returnSuccess('Unliked successfully.',$look);
             } else {
                 $look->likes()->attach($user->id);
-                return returnSuccess('Liked successfully.');
+                $look = Look::find($lookId);
+                return returnSuccess('Liked successfully.',$look);
             }
         } catch (\Exception $e) {
             return returnError($e->getMessage());

@@ -20,18 +20,18 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         try {
-                $validator = Validator::make(
-                    $request->all(),
-                    [
-                       // 'name'     => 'required|string|max:255',
-                       // 'phone'    => 'required|string|max:20',
-                        'email'    => 'required|email|unique:users,email',
-                       // 'password' => 'required|min:6',
-                    ],
-                    [
-                        'email.unique' => 'This email is already registered. Please sign in or use "Forgot password" to reset your credentials.',
-                    ]
-                );
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    // 'name'     => 'required|string|max:255',
+                    // 'phone'    => 'required|string|max:20',
+                    'email'    => 'required|email|unique:users,email',
+                    // 'password' => 'required|min:6',
+                ],
+                [
+                    'email.unique' => 'This email is already registered. Please sign in or use "Forgot password" to reset your credentials.',
+                ]
+            );
 
             if ($validator->fails()) {
                 return returnErrorWithData('Validation failed', $validator->errors());
@@ -91,7 +91,7 @@ class AuthController extends Controller
             $user->otp = $otp;
             $user->otp_expires_at = now()->addMinutes(10);
             $token = Str::random(64);
-            $userTemp->verify_token = $token;
+            $user->verify_token = $token;
             $user->save();
             $url = url("/verify-email?token={$token}");
             $response = sendOtpEmail($user->email, $user->name, $otp, $url);
@@ -163,18 +163,20 @@ class AuthController extends Controller
         if ($request->is_forgot_password == true) {
             return returnSuccess('Email verified successfully.', $userTemp);
         }
+        $user = User::where('email', $userTemp->email)->first();
+        if (empty($user)) {
 
-        // Move to main users table
-        $user = User::create([
-            'name' => $userTemp->name,
-            'email' => $userTemp->email,
-            'phone' => $userTemp->phone,
-            'password' => $userTemp->password,
-            'email_verified_at' => now()
-        ]);
+            // Move to main users table
+            $user = User::create([
+                'name' => $userTemp->name,
+                'email' => $userTemp->email,
+                'phone' => $userTemp->phone,
+                'password' => $userTemp->password,
+                'email_verified_at' => now()
+            ]);
+        }
 
         // Delete temp user
-        $userTemp->delete();
 
         return returnSuccess('Email verified successfully.', [
             'token' => $user->createToken('api-token')->plainTextToken,

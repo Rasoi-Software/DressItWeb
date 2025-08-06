@@ -164,7 +164,7 @@ class LookController extends Controller
     // ✅ Get All Looks
     public function index()
     {
-        $looks = Look::with('media', 'user')->where('user_id', auth()->id())->latest()->paginate(5);
+        $looks = Look::with('media', 'user')->where('user_id', auth()->id())->latest()->get();
         return returnSuccess('Looks fetched successfully.', $looks);
     }
     // ✅ Get All Looks all_draft_looks

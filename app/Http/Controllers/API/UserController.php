@@ -33,7 +33,10 @@ class UserController extends Controller
         if ($validator->fails()) {
             return returnErrorWithData('Validation failed', $validator->errors());
         }
-
+        if (!empty($request->lat) && !empty($request->lng)) {
+            geoNearByPlaceName($request->lat, $request->lng);
+            geoNearByCities($request->lat, $request->lng);
+        }
         if ($request->filled('name')) $user->name = $request->name;
         if ($request->filled('nickname')) $user->nickname = $request->nickname;
         if ($request->filled('gender')) $user->gender = $request->gender;

@@ -26,20 +26,23 @@ Route::post('/stripe/webhook', [StripeController::class, 'handleWebhook']);
 
 Route::post('/looks/draft', [LookController::class, 'storeWithoutLogin']);
 Route::get('/all-draft-looks/{id}', [LookController::class, 'all_draft_looks']);
-Route::get('/all-looks', [LookController::class, 'all_looks']);
+Route::get('/withoutLogin/all-looks', [LookController::class, 'all_looks']);
 Route::get('/all-looks/{id}', [LookController::class, 'all_looks']);
-Route::get('/looks/{id}', [LookController::class, 'show']);
+Route::get('/withoutLogin/looks/{id}', [LookController::class, 'show']);
+Route::get('/user/profile/{id}', [UserController::class, 'getProfile']);
+Route::get('/withoutLogin/search/looks', [LookController::class, 'search_look']);
 
 
 
 Route::middleware('auth:sanctum')->group(function () {
-
+    Route::get('/looks/{id}', [LookController::class, 'show']);
+    Route::get('/search/looks', [LookController::class, 'search_look']);
+    Route::get('/all-looks', [LookController::class, 'all_looks']);
+ 
     Route::post('/update-profile', [UserController::class, 'updateProfile']);
     Route::get('/my-profile', [UserController::class, 'getMyProfile']);
-    Route::get('/user/profile/{id}', [UserController::class, 'getProfile']);
     Route::get('/alluser', [UserController::class, 'alluser']);
 
-    Route::get('/search/looks', [LookController::class, 'search_look']);
     Route::get('/looks', [LookController::class, 'index']);
     Route::post('/looks', [LookController::class, 'store']);
     Route::put('/looks/{id}', [LookController::class, 'update']);
@@ -68,6 +71,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/send-message', [MessageController::class, 'send']);
     Route::get('/chat-list', [MessageController::class, 'chatList']);
     Route::get('/chat-with/{userId}', [MessageController::class, 'chatWith']);
+    Route::get('/chat-verify-contribution/{userId}', [MessageController::class, 'chatVerifyContribution']);
 
     Route::post('/follow', [FollowController::class, 'follow']);
     Route::post('/unfollow', [FollowController::class, 'unfollow']);

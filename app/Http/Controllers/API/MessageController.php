@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -20,7 +21,7 @@ class MessageController extends Controller
      */
     public function send(Request $request)
     {
-          $validator = Validator::make($request->all(), [
+        $validator = Validator::make($request->all(), [
             'to_user_id' => 'required|exists:users,id',
             'message' => 'required|string',
             'attachments'     => 'nullable|array|max:5',
@@ -46,20 +47,8 @@ class MessageController extends Controller
         // Check if successful payment exists in either direction
         $fromUserId = $request->user()->id;
         $toUserId = $request->to_user_id;
-        $paymentExists = Payment::where('status', 'succeeded')
-            ->where(function ($query) use ($fromUserId, $toUserId) {
-                $query->where(function ($q) use ($fromUserId, $toUserId) {
-                    $q->where('user_id', $fromUserId)
-                    ->where('to_user_id', $toUserId);
-                })->orWhere(function ($q) use ($fromUserId, $toUserId) {
-                    $q->where('user_id', $toUserId)
-                    ->where('to_user_id', $fromUserId);
-                });
-            })
-            ->exists();
-
-        if ($paymentExists) {
         
+
             $data = Message::create([
                 'from_user_id' => $request->user()->id,
                 'to_user_id' => $request->to_user_id,
@@ -82,31 +71,47 @@ class MessageController extends Controller
                     ]);
                 }
             }
-    
+
 
             event(new ChatMessageEvent($data->toArray()));
             //broadcast(new ChatMessageEvent($data->toArray()))->toOthers();
 
             return response()->json(['status' => 'Message Sent', 'data' => $data]);
-        } else {
-            return response()->json([
-                'success' => false,
-                'message' => 'You must have a successful payment to send a message.',
-            ], 403);
-        }
+        
     }
-    
+
     /**
      *  message list
      * @param $request mixed
      * @return json
      */
+    public function chatVerifyContribution(Request $request,$userId)
+    {
+        $fromUserId = $request->user()->id;
+        $toUserId = $userId;
+        $paymentExists = Payment::where('status', 'succeeded')
+            ->where(function ($query) use ($fromUserId, $toUserId) {
+                $query->where(function ($q) use ($fromUserId, $toUserId) {
+                    $q->where('user_id', $fromUserId)
+                        ->where('to_user_id', $toUserId);
+                })->orWhere(function ($q) use ($fromUserId, $toUserId) {
+                    $q->where('user_id', $toUserId)
+                        ->where('to_user_id', $fromUserId);
+                });
+            })
+            ->exists();
+        if (empty($paymentExists)) {
+            return returnError('You must have a successful payment to send a message.');
+        } else {
+            return returnSuccess('Continue.');
+        }
+    }
     public function chatList(Request $request)
     {
         $userId = $request->user()->id;
 
-        $messages = Message::with(['attachments','sender', 'receiver'])
-             ->where('from_user_id', $userId)
+        $messages = Message::with(['attachments', 'sender', 'receiver'])
+            ->where('from_user_id', $userId)
             ->orWhere('to_user_id', $userId)
             ->latest()
             ->get()
@@ -118,10 +123,10 @@ class MessageController extends Controller
 
         foreach ($messages as $partnerId => $msgs) {
             $last = $msgs->first();
-        
+
             // Determine the partner user object
             $partner = $last->from_user_id == $userId ? $last->receiver : $last->sender;
-        
+
             $list[] = [
                 'user_id' => $partnerId,
                 'name' => $partner->name,
@@ -143,14 +148,14 @@ class MessageController extends Controller
     {
         $authId = $request->user()->id;
 
-        $messages = Message::with('attachments') 
+        $messages = Message::with('attachments')
             ->where(function ($q) use ($authId, $userId) {
                 $q->where('from_user_id', $authId)
-                ->where('to_user_id', $userId);
+                    ->where('to_user_id', $userId);
             })
             ->orWhere(function ($q) use ($authId, $userId) {
                 $q->where('from_user_id', $userId)
-                ->where('to_user_id', $authId);
+                    ->where('to_user_id', $authId);
             })
             ->orderBy('created_at', 'asc')
             ->get();
@@ -174,6 +179,4 @@ class MessageController extends Controller
 
         return returnSuccess('Chat loaded successfully.', $formatted);
     }
-
 }
-

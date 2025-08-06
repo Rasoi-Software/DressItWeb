@@ -51,9 +51,12 @@ class LoginController extends Controller
             ->first();
 
         if (!$userTemp) {
-            return response()->json(['message' => 'Invalid or expired token'], 400);
+            return redirect()->route('home')->with('error', 'Email verification link expired');
         }
-
+        $user = User::where('email', $userTemp->email)->first();
+        if ($user) {
+            return redirect()->route('home')->with('error', 'Email already verified');
+        }
         // Create real user or mark as verified
         $user = User::create([
             'email' => $userTemp->email,
@@ -65,9 +68,8 @@ class LoginController extends Controller
         ]);
 
         // Clean up temp record
-        $userTemp->delete();
 
-        return view('auth.verifyemailid'); 
+        return view('auth.verifyemailid');
     }
 
     public function showResetForm(Request $request)
@@ -102,9 +104,4 @@ class LoginController extends Controller
 
         return redirect('/login')->with('success', 'Password has been reset successfully.');
     }
-
-
-
 }
-
-
